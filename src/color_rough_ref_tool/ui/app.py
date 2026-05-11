@@ -12,7 +12,11 @@ from color_rough_ref_tool.core.color_rough_input import (
     select_color_rough_image,
 )
 from color_rough_ref_tool.core.project_output import prepare_project_output
-from color_rough_ref_tool.core.selection_metadata import save_selected_candidate_metadata
+from color_rough_ref_tool.core.selection_metadata import (
+    SelectedCandidateMetadata,
+    load_selected_candidate_metadata,
+    save_selected_candidate_metadata,
+)
 from color_rough_ref_tool.core.settings import (
     AppSettings,
     check_comfyui_configuration,
@@ -34,6 +38,7 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
 
 WINDOW_TITLE = "Color Rough Reference Tool"
 PREDICTION_THUMBNAIL_MAX_SIZE = 160
+MASK_PREVIEW_MAX_SIZE = 320
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,6 +103,12 @@ def format_saved_prediction_message(saved: SavedPredictionCandidate) -> str:
     return f"Saved selected prediction: {saved.saved_path.as_posix()}"
 
 
+def format_mask_candidate_message(metadata: SelectedCandidateMetadata) -> str:
+    """Return a short status message for the mask editing preview candidate."""
+
+    return f"Loaded selected candidate for mask editing: {metadata.file_name}"
+
+
 class ColorRoughReferenceApp:
     """Small desktop shell for the first manual workflow steps."""
 
@@ -108,6 +119,7 @@ class ColorRoughReferenceApp:
         self.status_message = tk.StringVar(value="Ready")
         self.selected_prediction_path = tk.StringVar(value="")
         self.prediction_thumbnails: list[tk.PhotoImage] = []
+        self.mask_preview_image: tk.PhotoImage | None = None
 
         self.endpoint_var = tk.StringVar(value=self.settings.comfyui_endpoint)
         self.prediction_workflow_var = tk.StringVar(value=self.settings.prediction_workflow_path)
@@ -177,15 +189,33 @@ class ColorRoughReferenceApp:
             side="left",
         )
 
-        prediction_frame = ttk.LabelFrame(container, text="Prediction outputs", padding=8)
-        prediction_frame.grid(row=7, column=0, columnspan=3, sticky="nsew", pady=(8, 0))
-        prediction_frame.columnconfigure(0, weight=1)
+        content_pane = ttk.PanedWindow(container, orient=tk.VERTICAL)
+        content_pane.grid(row=7, column=0, columnspan=3, sticky="nsew", pady=(8, 0))
         container.rowconfigure(7, weight=1)
+
+        prediction_frame = ttk.LabelFrame(content_pane, text="Prediction outputs", padding=8)
+        content_pane.add(prediction_frame, weight=1)
+        prediction_frame.columnconfigure(0, weight=1)
         self.prediction_grid = ttk.Frame(prediction_frame)
         self.prediction_grid.grid(row=0, column=0, sticky="nw")
         ttk.Label(
             self.prediction_grid,
             text="No prediction images loaded",
+        ).grid(row=0, column=0, sticky="w")
+
+        mask_frame = ttk.LabelFrame(content_pane, text="Mask editing", padding=8)
+        content_pane.add(mask_frame, weight=1)
+        mask_frame.columnconfigure(0, weight=1)
+        ttk.Button(
+            mask_frame,
+            text="Load selected for mask",
+            command=self.load_selected_for_mask,
+        ).grid(row=0, column=0, sticky="w")
+        self.mask_preview_frame = ttk.Frame(mask_frame, padding=(0, 8, 0, 0))
+        self.mask_preview_frame.grid(row=1, column=0, sticky="nw")
+        ttk.Label(
+            self.mask_preview_frame,
+            text="No selected candidate loaded for mask editing",
         ).grid(row=0, column=0, sticky="w")
 
         ttk.Label(container, textvariable=self.status_message).grid(
@@ -386,7 +416,55 @@ class ColorRoughReferenceApp:
             f"Saved selected prediction:\n{saved.saved_path}\n\nMetadata:\n{metadata_path}",
         )
 
+    def load_selected_for_mask(self) -> None:
+        try:
+            settings = self._settings_from_form()
+            output_folders = prepare_project_output(settings.default_output_dir)
+            metadata = load_selected_candidate_metadata(output_folders.metadata)
+            selected_path = Path(metadata.saved_path)
+            if not selected_path.exists():
+                raise FileNotFoundError(f"Selected candidate image does not exist: {selected_path}")
+            if not selected_path.is_file():
+                raise ValueError(f"Selected candidate path must be a file: {selected_path}")
+        except (FileNotFoundError, OSError, ValueError) as error:
+            messagebox.showerror("Mask editing", str(error))
+            return
+
+        self._render_mask_preview(selected_path, metadata)
+        message = format_mask_candidate_message(metadata)
+        self.status_message.set(message)
+
+    def _render_mask_preview(
+        self,
+        selected_path: Path,
+        metadata: SelectedCandidateMetadata,
+    ) -> None:
+        for child in self.mask_preview_frame.winfo_children():
+            child.destroy()
+        self.mask_preview_image = self._load_image_preview(selected_path, MASK_PREVIEW_MAX_SIZE)
+
+        if self.mask_preview_image is None:
+            ttk.Label(
+                self.mask_preview_frame,
+                text="[preview unavailable]",
+            ).grid(row=0, column=0, sticky="w")
+        else:
+            ttk.Label(self.mask_preview_frame, image=self.mask_preview_image).grid(
+                row=0,
+                column=0,
+                sticky="w",
+            )
+        ttk.Label(self.mask_preview_frame, text=metadata.file_name).grid(
+            row=1,
+            column=0,
+            sticky="w",
+            pady=(4, 0),
+        )
+
     def _load_thumbnail_image(self, path: Path) -> tk.PhotoImage | None:
+        return self._load_image_preview(path, PREDICTION_THUMBNAIL_MAX_SIZE)
+
+    def _load_image_preview(self, path: Path, max_size: int) -> tk.PhotoImage | None:
         try:
             image = tk.PhotoImage(file=path)
         except tk.TclError:
@@ -394,10 +472,10 @@ class ColorRoughReferenceApp:
 
         scale = max(
             1,
-            (image.width() + PREDICTION_THUMBNAIL_MAX_SIZE - 1)
-            // PREDICTION_THUMBNAIL_MAX_SIZE,
-            (image.height() + PREDICTION_THUMBNAIL_MAX_SIZE - 1)
-            // PREDICTION_THUMBNAIL_MAX_SIZE,
+            (image.width() + max_size - 1)
+            // max_size,
+            (image.height() + max_size - 1)
+            // max_size,
         )
         if scale > 1:
             image = image.subsample(scale, scale)

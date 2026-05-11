@@ -2,6 +2,7 @@ from pathlib import Path
 import unittest
 
 from color_rough_ref_tool.core.settings import AppSettings
+from color_rough_ref_tool.core.selection_metadata import SelectedCandidateMetadata
 from color_rough_ref_tool.integrations.comfyui.prediction import (
     PredictionOutputImage,
     PredictionOutputReadResult,
@@ -13,6 +14,7 @@ from color_rough_ref_tool.ui.app import (
     format_configuration_message,
     format_prediction_output_count,
     format_prediction_output_result,
+    format_mask_candidate_message,
     format_saved_prediction_message,
     format_selected_prediction_message,
     prediction_output_folder,
@@ -105,6 +107,19 @@ class UiAppTest(unittest.TestCase):
         self.assertEqual(
             format_saved_prediction_message(saved),
             "Saved selected prediction: project_output/selected/pred_002.png",
+        )
+
+    def test_format_mask_candidate_message_reports_file_name(self) -> None:
+        metadata = SelectedCandidateMetadata(
+            source_path="project_output/predictions/pred_002.png",
+            saved_path="project_output/selected/pred_002.png",
+            file_name="pred_002.png",
+            file_size_bytes=123,
+        )
+
+        self.assertEqual(
+            format_mask_candidate_message(metadata),
+            "Loaded selected candidate for mask editing: pred_002.png",
         )
 
 
