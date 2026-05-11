@@ -11,6 +11,12 @@ from color_rough_ref_tool.core.color_rough_input import (
     build_color_rough_preview,
     select_color_rough_image,
 )
+from color_rough_ref_tool.core.mask_image import (
+    BrushMaskStroke,
+    MaskOperation,
+    RectangleMask,
+    save_mask_png,
+)
 from color_rough_ref_tool.core.project_output import prepare_project_output
 from color_rough_ref_tool.core.selection_metadata import (
     SelectedCandidateMetadata,
@@ -148,6 +154,8 @@ class ColorRoughReferenceApp:
         self.last_mask_point: tuple[int, int] | None = None
         self.rectangle_start_point: tuple[int, int] | None = None
         self.active_rectangle_id: int | None = None
+        self.mask_operations: list[MaskOperation] = []
+        self.mask_candidate_metadata: SelectedCandidateMetadata | None = None
 
         self.endpoint_var = tk.StringVar(value=self.settings.comfyui_endpoint)
         self.prediction_workflow_var = tk.StringVar(value=self.settings.prediction_workflow_path)
@@ -266,8 +274,13 @@ class ColorRoughReferenceApp:
             text="Clear mask",
             command=self.clear_mask_drawing,
         ).grid(row=0, column=5, sticky="w")
+        ttk.Button(
+            mask_frame,
+            text="Save mask",
+            command=self.save_mask_image,
+        ).grid(row=0, column=6, sticky="w", padx=(8, 0))
         self.mask_preview_frame = ttk.Frame(mask_frame, padding=(0, 8, 0, 0))
-        self.mask_preview_frame.grid(row=1, column=0, columnspan=6, sticky="nw")
+        self.mask_preview_frame.grid(row=1, column=0, columnspan=7, sticky="nw")
         ttk.Label(
             self.mask_preview_frame,
             text="No selected candidate loaded for mask editing",
@@ -501,6 +514,8 @@ class ColorRoughReferenceApp:
         self.last_mask_point = None
         self.rectangle_start_point = None
         self.active_rectangle_id = None
+        self.mask_operations.clear()
+        self.mask_candidate_metadata = metadata
 
         if self.mask_preview_image is None:
             ttk.Label(
@@ -563,6 +578,13 @@ class ColorRoughReferenceApp:
             width=brush_size,
             tags=("mask_stroke",),
         )
+        self.mask_operations.append(
+            BrushMaskStroke(
+                start=self.last_mask_point,
+                end=current_point,
+                size=brush_size,
+            )
+        )
         self.last_mask_point = current_point
 
     def end_mask_stroke(self, event: tk.Event) -> None:
@@ -604,6 +626,13 @@ class ColorRoughReferenceApp:
         )
 
     def finish_rectangle_mask(self, event: tk.Event) -> None:
+        if self.rectangle_start_point is not None:
+            self.mask_operations.append(
+                RectangleMask(
+                    start=self.rectangle_start_point,
+                    end=(int(event.x), int(event.y)),
+                )
+            )
         self.update_rectangle_mask(event)
         self.rectangle_start_point = None
         self.active_rectangle_id = None
@@ -617,6 +646,7 @@ class ColorRoughReferenceApp:
         self.rectangle_start_point = None
         self.active_rectangle_id = None
         self.last_mask_point = None
+        self.mask_operations.clear()
         self.status_message.set("Cleared mask drawing.")
 
     def _draw_mask_dot(self, x: int, y: int) -> None:
@@ -634,6 +664,42 @@ class ColorRoughReferenceApp:
             outline="#ff3333",
             tags=("mask_stroke",),
         )
+        self.mask_operations.append(
+            BrushMaskStroke(
+                start=(x, y),
+                end=(x, y),
+                size=brush_size,
+            )
+        )
+
+    def save_mask_image(self) -> None:
+        if self.mask_canvas is None or self.mask_preview_image is None:
+            message = "Load a selected candidate before saving a mask."
+            self.status_message.set(message)
+            messagebox.showinfo("Mask editing", message)
+            return
+        if self.mask_candidate_metadata is None:
+            message = "Selected candidate metadata is not loaded."
+            self.status_message.set(message)
+            messagebox.showinfo("Mask editing", message)
+            return
+
+        try:
+            settings = self._settings_from_form()
+            output_folders = prepare_project_output(settings.default_output_dir)
+            saved_path = save_mask_png(
+                width=self.mask_preview_image.width(),
+                height=self.mask_preview_image.height(),
+                operations=tuple(self.mask_operations),
+                masks_dir=output_folders.masks,
+                candidate_file_name=self.mask_candidate_metadata.file_name,
+            )
+        except (OSError, ValueError) as error:
+            messagebox.showerror("Mask editing", str(error))
+            return
+
+        self.status_message.set(f"Saved mask: {saved_path}")
+        messagebox.showinfo("Mask editing", f"Saved mask:\n{saved_path}")
 
     def _load_thumbnail_image(self, path: Path) -> tk.PhotoImage | None:
         return self._load_image_preview(path, PREDICTION_THUMBNAIL_MAX_SIZE)

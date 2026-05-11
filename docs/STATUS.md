@@ -99,6 +99,7 @@ It now saves minimal selected-candidate metadata to `project_output/metadata/sel
 The minimal UI can now load the saved selected candidate metadata and show the selected candidate in a simple mask editing preview area.
 The mask editing preview now has a minimal brush tool for drawing red mask strokes on the displayed selected candidate.
 The mask editing preview now also has a minimal rectangle tool for marking a rectangular mask area on the displayed selected candidate.
+The minimal UI can now save the drawn brush and rectangle mask as a black-and-white PNG in `project_output/masks`.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
@@ -106,7 +107,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No live ComfyUI connection check, generation completion waiting, mask saving, or hand inpainting execution exists yet.
+No live ComfyUI connection check, generation completion waiting, or hand inpainting execution exists yet.
 
 ---
 
@@ -139,15 +140,15 @@ No live ComfyUI connection check, generation completion waiting, mask saving, or
 
 ## Last Completed Task
 
-Phase 5.3:
-Added minimal rectangle-based mask marking in the mask editing preview.
+Phase 5.4:
+Added minimal mask image saving into `project_output/masks`.
 
 ---
 
 ## Current Next Task
 
-Phase 5.4:
-Save mask image into `masks/`.
+Phase 6.1:
+Add function to trigger hand inpainting workflow.
 
 ---
 
