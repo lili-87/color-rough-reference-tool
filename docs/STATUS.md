@@ -90,6 +90,8 @@ The supported workflow placeholder strings are `{{COLOR_ROUGH_IMAGE_PATH}}` and 
 It can now read generated prediction image files from a prediction output folder.
 Supported prediction output image formats are `png`, `jpg`, `jpeg`, and `webp`.
 It does not wait for generation completion yet.
+The minimal UI can now load prediction outputs from `project_output/predictions` and show them in a simple prediction output area.
+Images that Tkinter can preview are shown as small thumbnails; unsupported preview formats still appear by file name.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
@@ -97,7 +99,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No live ComfyUI connection check, generation completion waiting, prediction thumbnail UI, or mask editing UI exists yet.
+No live ComfyUI connection check, generation completion waiting, candidate selection UI, or mask editing UI exists yet.
 
 ---
 
@@ -130,15 +132,15 @@ No live ComfyUI connection check, generation completion waiting, prediction thum
 
 ## Last Completed Task
 
-Phase 3.3:
-Added minimal prediction output folder image reading.
+Phase 3.4:
+Added minimal prediction thumbnail display in the UI.
 
 ---
 
 ## Current Next Task
 
-Phase 3.4:
-Show prediction thumbnails in UI.
+Phase 3.5:
+Handle missing or failed generation outputs gracefully.
 
 ---
 

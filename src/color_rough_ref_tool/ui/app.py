@@ -22,9 +22,14 @@ from color_rough_ref_tool.core.settings import (
     with_hand_inpainting_workflow_path,
     with_prediction_workflow_path,
 )
+from color_rough_ref_tool.integrations.comfyui.prediction import (
+    PredictionOutputImage,
+    read_prediction_outputs,
+)
 
 
 WINDOW_TITLE = "Color Rough Reference Tool"
+PREDICTION_THUMBNAIL_MAX_SIZE = 160
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +60,20 @@ def format_configuration_message(settings: AppSettings) -> str:
     return "Please fix these settings:\n" + "\n".join(f"- {error}" for error in result.errors)
 
 
+def prediction_output_folder(settings: AppSettings) -> Path:
+    """Return the folder where prediction outputs are expected."""
+
+    return Path(settings.default_output_dir) / "predictions"
+
+
+def format_prediction_output_count(outputs: tuple[PredictionOutputImage, ...]) -> str:
+    """Return a short UI status message for loaded prediction outputs."""
+
+    if len(outputs) == 1:
+        return "Loaded 1 prediction image."
+    return f"Loaded {len(outputs)} prediction images."
+
+
 class ColorRoughReferenceApp:
     """Small desktop shell for the first manual workflow steps."""
 
@@ -63,6 +82,7 @@ class ColorRoughReferenceApp:
         self.settings = load_settings()
         self.color_rough_path = tk.StringVar(value="No color rough selected")
         self.status_message = tk.StringVar(value="Ready")
+        self.prediction_thumbnails: list[tk.PhotoImage] = []
 
         self.endpoint_var = tk.StringVar(value=self.settings.comfyui_endpoint)
         self.prediction_workflow_var = tk.StringVar(value=self.settings.prediction_workflow_path)
@@ -70,7 +90,7 @@ class ColorRoughReferenceApp:
         self.output_dir_var = tk.StringVar(value=self.settings.default_output_dir)
 
         self.root.title(WINDOW_TITLE)
-        self.root.minsize(720, 420)
+        self.root.minsize(760, 560)
         self._build_layout()
 
     def _build_layout(self) -> None:
@@ -120,10 +140,27 @@ class ColorRoughReferenceApp:
             side="left",
             padx=(0, 8),
         )
-        ttk.Button(button_bar, text="Save snapshot", command=self.save_snapshot).pack(side="left")
+        ttk.Button(button_bar, text="Save snapshot", command=self.save_snapshot).pack(
+            side="left",
+            padx=(0, 8),
+        )
+        ttk.Button(button_bar, text="Load predictions", command=self.load_prediction_outputs).pack(
+            side="left",
+        )
+
+        prediction_frame = ttk.LabelFrame(container, text="Prediction outputs", padding=8)
+        prediction_frame.grid(row=7, column=0, columnspan=3, sticky="nsew", pady=(8, 0))
+        prediction_frame.columnconfigure(0, weight=1)
+        container.rowconfigure(7, weight=1)
+        self.prediction_grid = ttk.Frame(prediction_frame)
+        self.prediction_grid.grid(row=0, column=0, sticky="nw")
+        ttk.Label(
+            self.prediction_grid,
+            text="No prediction images loaded",
+        ).grid(row=0, column=0, sticky="w")
 
         ttk.Label(container, textvariable=self.status_message).grid(
-            row=7,
+            row=8,
             column=0,
             columnspan=3,
             sticky="ew",
@@ -237,6 +274,62 @@ class ColorRoughReferenceApp:
 
         self.status_message.set(f"Saved settings snapshot: {saved_path}")
         messagebox.showinfo("Settings snapshot", f"Saved settings snapshot:\n{saved_path}")
+
+    def load_prediction_outputs(self) -> None:
+        try:
+            settings = self._settings_from_form()
+            prepare_project_output(settings.default_output_dir)
+            outputs = read_prediction_outputs(prediction_output_folder(settings))
+        except (FileNotFoundError, ValueError) as error:
+            messagebox.showerror("Prediction outputs", str(error))
+            return
+
+        self._render_prediction_outputs(outputs)
+        self.status_message.set(format_prediction_output_count(outputs))
+
+    def _render_prediction_outputs(self, outputs: tuple[PredictionOutputImage, ...]) -> None:
+        for child in self.prediction_grid.winfo_children():
+            child.destroy()
+        self.prediction_thumbnails.clear()
+
+        if not outputs:
+            ttk.Label(
+                self.prediction_grid,
+                text="No prediction images found",
+            ).grid(row=0, column=0, sticky="w")
+            return
+
+        for index, output in enumerate(outputs):
+            row = index // 4
+            column = index % 4
+            item_frame = ttk.Frame(self.prediction_grid, padding=6)
+            item_frame.grid(row=row, column=column, sticky="n", padx=4, pady=4)
+
+            image = self._load_thumbnail_image(output.path)
+            if image is None:
+                ttk.Label(item_frame, text="[preview unavailable]").grid(row=0, column=0)
+            else:
+                self.prediction_thumbnails.append(image)
+                ttk.Label(item_frame, image=image).grid(row=0, column=0)
+
+            ttk.Label(item_frame, text=output.file_name).grid(row=1, column=0, pady=(4, 0))
+
+    def _load_thumbnail_image(self, path: Path) -> tk.PhotoImage | None:
+        try:
+            image = tk.PhotoImage(file=path)
+        except tk.TclError:
+            return None
+
+        scale = max(
+            1,
+            (image.width() + PREDICTION_THUMBNAIL_MAX_SIZE - 1)
+            // PREDICTION_THUMBNAIL_MAX_SIZE,
+            (image.height() + PREDICTION_THUMBNAIL_MAX_SIZE - 1)
+            // PREDICTION_THUMBNAIL_MAX_SIZE,
+        )
+        if scale > 1:
+            image = image.subsample(scale, scale)
+        return image
 
     def _settings_from_form(self) -> AppSettings:
         return build_settings_from_form(

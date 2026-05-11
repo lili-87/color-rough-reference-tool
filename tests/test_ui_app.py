@@ -1,10 +1,14 @@
+from pathlib import Path
 import unittest
 
 from color_rough_ref_tool.core.settings import AppSettings
+from color_rough_ref_tool.integrations.comfyui.prediction import PredictionOutputImage
 from color_rough_ref_tool.ui.app import (
     SettingsFormValues,
     build_settings_from_form,
     format_configuration_message,
+    format_prediction_output_count,
+    prediction_output_folder,
 )
 
 
@@ -42,6 +46,24 @@ class UiAppTest(unittest.TestCase):
         self.assertIn("Please fix these settings:", message)
         self.assertIn("ComfyUI endpoint:", message)
         self.assertIn("Prediction workflow file:", message)
+
+    def test_prediction_output_folder_uses_default_output_dir(self) -> None:
+        settings = AppSettings(default_output_dir="custom_output")
+
+        folder = prediction_output_folder(settings)
+
+        self.assertEqual(folder.as_posix(), "custom_output/predictions")
+
+    def test_format_prediction_output_count_reports_count(self) -> None:
+        output = PredictionOutputImage(
+            path=Path("predictions/pred_001.png"),
+            file_name="pred_001.png",
+            file_size_bytes=10,
+            modified_time=1.0,
+        )
+
+        self.assertEqual(format_prediction_output_count(()), "Loaded 0 prediction images.")
+        self.assertEqual(format_prediction_output_count((output,)), "Loaded 1 prediction image.")
 
 
 if __name__ == "__main__":
