@@ -6,8 +6,10 @@ from color_rough_ref_tool.core.settings import (
     AppSettings,
     load_settings,
     normalize_comfyui_endpoint,
+    normalize_workflow_file_path,
     save_settings,
     with_comfyui_endpoint,
+    with_prediction_workflow_path,
 )
 
 
@@ -62,6 +64,42 @@ class SettingsStorageTest(unittest.TestCase):
 
         self.assertEqual(updated.comfyui_endpoint, "http://localhost:8188")
         self.assertEqual(updated.prediction_workflow_path, settings.prediction_workflow_path)
+        self.assertEqual(
+            updated.hand_inpainting_workflow_path,
+            settings.hand_inpainting_workflow_path,
+        )
+        self.assertEqual(updated.default_output_dir, settings.default_output_dir)
+
+    def test_normalize_workflow_file_path_accepts_json_path(self) -> None:
+        workflow_path = normalize_workflow_file_path(" workflows/prediction_workflow.JSON ")
+
+        self.assertEqual(workflow_path, "workflows/prediction_workflow.JSON")
+
+    def test_normalize_workflow_file_path_rejects_non_json_path(self) -> None:
+        with self.assertRaises(ValueError):
+            normalize_workflow_file_path("workflows/prediction_workflow.txt")
+
+    def test_normalize_workflow_file_path_rejects_existing_directory(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            with self.assertRaises(ValueError):
+                normalize_workflow_file_path(temp_dir)
+
+    def test_with_prediction_workflow_path_updates_only_prediction_workflow(self) -> None:
+        settings = AppSettings(
+            comfyui_endpoint="http://127.0.0.1:8188",
+            prediction_workflow_path="workflows/prediction.json",
+            hand_inpainting_workflow_path="workflows/hand_inpaint.json",
+            default_output_dir="project_output",
+        )
+
+        updated = with_prediction_workflow_path(
+            settings,
+            "workflows/new_prediction.json",
+        )
+
+        self.assertEqual(updated.comfyui_endpoint, settings.comfyui_endpoint)
+        self.assertEqual(updated.prediction_workflow_path, "workflows/new_prediction.json")
         self.assertEqual(
             updated.hand_inpainting_workflow_path,
             settings.hand_inpainting_workflow_path,

@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 
 DEFAULT_SETTINGS_PATH = Path("settings") / "settings.json"
+WORKFLOW_FILE_EXTENSION = ".json"
 
 
 @dataclass(slots=True)
@@ -34,6 +35,21 @@ def with_comfyui_endpoint(settings: AppSettings, endpoint: str) -> AppSettings:
     )
 
 
+def with_prediction_workflow_path(
+    settings: AppSettings,
+    workflow_path: Path | str,
+) -> AppSettings:
+    """Return settings with an updated prediction workflow path."""
+
+    normalized_path = normalize_workflow_file_path(workflow_path)
+    return AppSettings(
+        comfyui_endpoint=settings.comfyui_endpoint,
+        prediction_workflow_path=normalized_path,
+        hand_inpainting_workflow_path=settings.hand_inpainting_workflow_path,
+        default_output_dir=settings.default_output_dir,
+    )
+
+
 def normalize_comfyui_endpoint(endpoint: str) -> str:
     """Validate and normalize a ComfyUI HTTP endpoint."""
 
@@ -45,6 +61,19 @@ def normalize_comfyui_endpoint(endpoint: str) -> str:
             "for example http://127.0.0.1:8188"
         )
     return normalized_endpoint
+
+
+def normalize_workflow_file_path(workflow_path: Path | str) -> str:
+    """Validate and normalize a ComfyUI workflow JSON file path."""
+
+    normalized_path = Path(str(workflow_path).strip())
+    if not str(normalized_path):
+        raise ValueError("Workflow file path must not be empty.")
+    if normalized_path.suffix.lower() != WORKFLOW_FILE_EXTENSION:
+        raise ValueError("Workflow file path must point to a .json file.")
+    if normalized_path.exists() and normalized_path.is_dir():
+        raise ValueError(f"Workflow file path must not be a directory: {normalized_path}")
+    return normalized_path.as_posix()
 
 
 def load_settings(path: Path | str = DEFAULT_SETTINGS_PATH) -> AppSettings:

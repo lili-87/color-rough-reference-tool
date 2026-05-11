@@ -20,7 +20,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 ## Phase 2: ComfyUI Configuration
 
 - [x] Phase 2.1: Add UI/settings field for ComfyUI path or endpoint.
-- [ ] Phase 2.2: Add UI/settings field for prediction workflow file.
+- [x] Phase 2.2: Add UI/settings field for prediction workflow file.
 - [ ] Phase 2.3: Add UI/settings field for hand inpainting workflow file.
 - [ ] Phase 2.4: Add ComfyUI configuration test.
 - [ ] Phase 2.5: Save settings snapshot metadata.
