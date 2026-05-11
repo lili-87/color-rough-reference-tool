@@ -29,7 +29,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 ## Phase 3: Prediction Generation
 
 - [x] Phase 3.1: Add function to trigger prediction workflow.
-- [ ] Phase 3.2: Pass input color rough to prediction workflow.
+- [x] Phase 3.2: Pass input color rough to prediction workflow.
 - [ ] Phase 3.3: Read prediction outputs from output folder.
 - [ ] Phase 3.4: Show prediction thumbnails in UI.
 - [ ] Phase 3.5: Handle missing or failed generation outputs gracefully.

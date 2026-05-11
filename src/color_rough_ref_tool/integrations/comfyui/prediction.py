@@ -13,6 +13,12 @@ from color_rough_ref_tool.core.settings import AppSettings, normalize_comfyui_en
 
 
 PROMPT_ENDPOINT_PATH = "/prompt"
+COLOR_ROUGH_IMAGE_PATH_PLACEHOLDER = "{{COLOR_ROUGH_IMAGE_PATH}}"
+COLOR_ROUGH_IMAGE_PLACEHOLDER = "{{COLOR_ROUGH_IMAGE}}"
+COLOR_ROUGH_PLACEHOLDERS = (
+    COLOR_ROUGH_IMAGE_PATH_PLACEHOLDER,
+    COLOR_ROUGH_IMAGE_PLACEHOLDER,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +32,7 @@ class ComfyUIPromptResult:
 def trigger_prediction_workflow(
     settings: AppSettings,
     *,
+    color_rough_path: Path | str | None = None,
     client_id: str | None = None,
     timeout_seconds: float = 30,
     opener: Callable[..., Any] = urlopen,
@@ -33,6 +40,8 @@ def trigger_prediction_workflow(
     """Load the configured prediction workflow and queue it in external ComfyUI."""
 
     workflow = load_prediction_workflow(settings.prediction_workflow_path)
+    if color_rough_path is not None:
+        workflow = inject_color_rough_path(workflow, color_rough_path)
     return queue_comfyui_prompt(
         endpoint=settings.comfyui_endpoint,
         workflow=workflow,
@@ -62,6 +71,22 @@ def load_prediction_workflow(workflow_path: Path | str) -> dict[str, Any]:
         raise ValueError(f"Prediction workflow placeholder must be replaced: {path}")
 
     return workflow
+
+
+def inject_color_rough_path(
+    workflow: dict[str, Any],
+    color_rough_path: Path | str,
+) -> dict[str, Any]:
+    """Return a workflow with color rough placeholders replaced by the image path."""
+
+    image_path = Path(color_rough_path)
+    if not image_path.exists():
+        raise FileNotFoundError(f"Color rough image does not exist: {image_path}")
+    if not image_path.is_file():
+        raise ValueError(f"Color rough path must be a file: {image_path}")
+
+    normalized_image_path = image_path.resolve().as_posix()
+    return _replace_color_rough_placeholders(workflow, normalized_image_path)
 
 
 def queue_comfyui_prompt(
@@ -105,3 +130,22 @@ def queue_comfyui_prompt(
 
 def _prompt_url(endpoint: str) -> str:
     return f"{normalize_comfyui_endpoint(endpoint)}{PROMPT_ENDPOINT_PATH}"
+
+
+def _replace_color_rough_placeholders(value: Any, image_path: str) -> Any:
+    if isinstance(value, str):
+        replaced = value
+        for placeholder in COLOR_ROUGH_PLACEHOLDERS:
+            replaced = replaced.replace(placeholder, image_path)
+        return replaced
+    if isinstance(value, list):
+        return [
+            _replace_color_rough_placeholders(item, image_path)
+            for item in value
+        ]
+    if isinstance(value, dict):
+        return {
+            key: _replace_color_rough_placeholders(item, image_path)
+            for key, item in value.items()
+        }
+    return value
