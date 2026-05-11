@@ -2,7 +2,13 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from color_rough_ref_tool.core.settings import AppSettings, load_settings, save_settings
+from color_rough_ref_tool.core.settings import (
+    AppSettings,
+    load_settings,
+    normalize_comfyui_endpoint,
+    save_settings,
+    with_comfyui_endpoint,
+)
 
 
 TEST_TEMP_DIR = Path("tmp") / "tests"
@@ -34,6 +40,33 @@ class SettingsStorageTest(unittest.TestCase):
 
         self.assertEqual(saved_path, settings_path)
         self.assertEqual(loaded, original)
+
+    def test_normalize_comfyui_endpoint_accepts_http_url(self) -> None:
+        endpoint = normalize_comfyui_endpoint(" http://127.0.0.1:8188/ ")
+
+        self.assertEqual(endpoint, "http://127.0.0.1:8188")
+
+    def test_normalize_comfyui_endpoint_rejects_non_http_url(self) -> None:
+        with self.assertRaises(ValueError):
+            normalize_comfyui_endpoint("file:///ComfyUI")
+
+    def test_with_comfyui_endpoint_updates_only_endpoint(self) -> None:
+        settings = AppSettings(
+            comfyui_endpoint="http://127.0.0.1:8188",
+            prediction_workflow_path="workflows/prediction.json",
+            hand_inpainting_workflow_path="workflows/hand_inpaint.json",
+            default_output_dir="project_output",
+        )
+
+        updated = with_comfyui_endpoint(settings, "http://localhost:8188/")
+
+        self.assertEqual(updated.comfyui_endpoint, "http://localhost:8188")
+        self.assertEqual(updated.prediction_workflow_path, settings.prediction_workflow_path)
+        self.assertEqual(
+            updated.hand_inpainting_workflow_path,
+            settings.hand_inpainting_workflow_path,
+        )
+        self.assertEqual(updated.default_output_dir, settings.default_output_dir)
 
 
 if __name__ == "__main__":

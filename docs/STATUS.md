@@ -62,6 +62,7 @@ docs/
 Basic settings storage now exists in `src/color_rough_ref_tool/core/settings.py`.
 It can load default settings when no settings file exists and save user settings as JSON.
 The default local settings path is `settings/settings.json`, which is ignored by Git.
+It can now validate and update the ComfyUI endpoint setting.
 
 Project output folder creation now exists in `src/color_rough_ref_tool/core/project_output.py`.
 It creates the standard `project_output` subfolders: `input`, `predictions`, `selected`, `masks`, `hand_refs`, `sheets`, and `metadata`.
@@ -83,7 +84,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No app entry point, UI implementation, ComfyUI settings UI, or ComfyUI execution code exists yet.
+No app entry point, UI implementation, ComfyUI workflow file settings UI, ComfyUI connection test, or ComfyUI execution code exists yet.
 
 ---
 
@@ -116,15 +117,15 @@ No app entry point, UI implementation, ComfyUI settings UI, or ComfyUI execution
 
 ## Last Completed Task
 
-Phase 1.4:
-Added supported color rough image format validation.
+Phase 2.1:
+Added minimal ComfyUI endpoint setting handling.
 
 ---
 
 ## Current Next Task
 
-Phase 2.1:
-Add UI/settings field for ComfyUI path or endpoint.
+Phase 2.2:
+Add UI/settings field for prediction workflow file.
 
 ---
 

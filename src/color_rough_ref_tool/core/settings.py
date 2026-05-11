@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 
 DEFAULT_SETTINGS_PATH = Path("settings") / "settings.json"
@@ -19,6 +20,31 @@ class AppSettings:
     prediction_workflow_path: str = "workflows/prediction_workflow.json"
     hand_inpainting_workflow_path: str = "workflows/hand_inpainting_workflow.json"
     default_output_dir: str = "project_output"
+
+
+def with_comfyui_endpoint(settings: AppSettings, endpoint: str) -> AppSettings:
+    """Return settings with an updated ComfyUI endpoint."""
+
+    normalized_endpoint = normalize_comfyui_endpoint(endpoint)
+    return AppSettings(
+        comfyui_endpoint=normalized_endpoint,
+        prediction_workflow_path=settings.prediction_workflow_path,
+        hand_inpainting_workflow_path=settings.hand_inpainting_workflow_path,
+        default_output_dir=settings.default_output_dir,
+    )
+
+
+def normalize_comfyui_endpoint(endpoint: str) -> str:
+    """Validate and normalize a ComfyUI HTTP endpoint."""
+
+    normalized_endpoint = endpoint.strip().rstrip("/")
+    parsed = urlparse(normalized_endpoint)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError(
+            "ComfyUI endpoint must be an http or https URL, "
+            "for example http://127.0.0.1:8188"
+        )
+    return normalized_endpoint
 
 
 def load_settings(path: Path | str = DEFAULT_SETTINGS_PATH) -> AppSettings:
