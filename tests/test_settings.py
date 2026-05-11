@@ -4,6 +4,7 @@ import unittest
 
 from color_rough_ref_tool.core.settings import (
     AppSettings,
+    check_comfyui_configuration,
     load_settings,
     normalize_comfyui_endpoint,
     normalize_workflow_file_path,
@@ -127,6 +128,28 @@ class SettingsStorageTest(unittest.TestCase):
             "workflows/new_hand_inpaint.json",
         )
         self.assertEqual(updated.default_output_dir, settings.default_output_dir)
+
+    def test_check_comfyui_configuration_accepts_default_settings(self) -> None:
+        result = check_comfyui_configuration(AppSettings())
+
+        self.assertTrue(result.ok)
+        self.assertEqual(result.errors, ())
+
+    def test_check_comfyui_configuration_reports_invalid_values(self) -> None:
+        settings = AppSettings(
+            comfyui_endpoint="file:///ComfyUI",
+            prediction_workflow_path="workflows/prediction.txt",
+            hand_inpainting_workflow_path="workflows/hand_inpaint.txt",
+            default_output_dir="project_output",
+        )
+
+        result = check_comfyui_configuration(settings)
+
+        self.assertFalse(result.ok)
+        self.assertEqual(len(result.errors), 3)
+        self.assertIn("ComfyUI endpoint:", result.errors[0])
+        self.assertIn("Prediction workflow file:", result.errors[1])
+        self.assertIn("Hand inpainting workflow file:", result.errors[2])
 
 
 if __name__ == "__main__":

@@ -23,6 +23,14 @@ class AppSettings:
     default_output_dir: str = "project_output"
 
 
+@dataclass(frozen=True, slots=True)
+class ComfyUIConfigurationCheck:
+    """Result of checking the minimum ComfyUI-related settings."""
+
+    ok: bool
+    errors: tuple[str, ...]
+
+
 def with_comfyui_endpoint(settings: AppSettings, endpoint: str) -> AppSettings:
     """Return settings with an updated ComfyUI endpoint."""
 
@@ -89,6 +97,29 @@ def normalize_workflow_file_path(workflow_path: Path | str) -> str:
     if normalized_path.exists() and normalized_path.is_dir():
         raise ValueError(f"Workflow file path must not be a directory: {normalized_path}")
     return normalized_path.as_posix()
+
+
+def check_comfyui_configuration(settings: AppSettings) -> ComfyUIConfigurationCheck:
+    """Check the minimum local ComfyUI configuration without connecting to ComfyUI."""
+
+    errors: list[str] = []
+
+    try:
+        normalize_comfyui_endpoint(settings.comfyui_endpoint)
+    except ValueError as error:
+        errors.append(f"ComfyUI endpoint: {error}")
+
+    try:
+        normalize_workflow_file_path(settings.prediction_workflow_path)
+    except ValueError as error:
+        errors.append(f"Prediction workflow file: {error}")
+
+    try:
+        normalize_workflow_file_path(settings.hand_inpainting_workflow_path)
+    except ValueError as error:
+        errors.append(f"Hand inpainting workflow file: {error}")
+
+    return ComfyUIConfigurationCheck(ok=not errors, errors=tuple(errors))
 
 
 def load_settings(path: Path | str = DEFAULT_SETTINGS_PATH) -> AppSettings:
