@@ -13,6 +13,7 @@ from color_rough_ref_tool.core.settings import AppSettings, normalize_comfyui_en
 
 
 PROMPT_ENDPOINT_PATH = "/prompt"
+PREDICTION_IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".webp"})
 COLOR_ROUGH_IMAGE_PATH_PLACEHOLDER = "{{COLOR_ROUGH_IMAGE_PATH}}"
 COLOR_ROUGH_IMAGE_PLACEHOLDER = "{{COLOR_ROUGH_IMAGE}}"
 COLOR_ROUGH_PLACEHOLDERS = (
@@ -27,6 +28,16 @@ class ComfyUIPromptResult:
 
     prompt_id: str
     response: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class PredictionOutputImage:
+    """A generated prediction image found in an output folder."""
+
+    path: Path
+    file_name: str
+    file_size_bytes: int
+    modified_time: float
 
 
 def trigger_prediction_workflow(
@@ -87,6 +98,34 @@ def inject_color_rough_path(
 
     normalized_image_path = image_path.resolve().as_posix()
     return _replace_color_rough_placeholders(workflow, normalized_image_path)
+
+
+def read_prediction_outputs(output_dir: Path | str) -> tuple[PredictionOutputImage, ...]:
+    """Read generated prediction image files from an output folder."""
+
+    folder = Path(output_dir)
+    if not folder.exists():
+        raise FileNotFoundError(f"Prediction output folder does not exist: {folder}")
+    if not folder.is_dir():
+        raise ValueError(f"Prediction output path must be a folder: {folder}")
+
+    images: list[PredictionOutputImage] = []
+    for path in sorted(folder.iterdir(), key=lambda item: item.name.lower()):
+        if not path.is_file():
+            continue
+        if path.suffix.lower() not in PREDICTION_IMAGE_EXTENSIONS:
+            continue
+        stat = path.stat()
+        images.append(
+            PredictionOutputImage(
+                path=path,
+                file_name=path.name,
+                file_size_bytes=stat.st_size,
+                modified_time=stat.st_mtime,
+            )
+        )
+
+    return tuple(images)
 
 
 def queue_comfyui_prompt(

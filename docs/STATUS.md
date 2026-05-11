@@ -87,7 +87,9 @@ Minimal prediction workflow triggering now exists in `src/color_rough_ref_tool/i
 It can load the configured prediction workflow JSON and send it to an external ComfyUI `/prompt` endpoint.
 It can now replace color rough placeholders in the prediction workflow with the selected color rough image path before sending the prompt.
 The supported workflow placeholder strings are `{{COLOR_ROUGH_IMAGE_PATH}}` and `{{COLOR_ROUGH_IMAGE}}`.
-It does not wait for or read generated image outputs yet.
+It can now read generated prediction image files from a prediction output folder.
+Supported prediction output image formats are `png`, `jpg`, `jpeg`, and `webp`.
+It does not wait for generation completion yet.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
@@ -95,7 +97,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No live ComfyUI connection check, prediction output reading, prediction thumbnail UI, or mask editing UI exists yet.
+No live ComfyUI connection check, generation completion waiting, prediction thumbnail UI, or mask editing UI exists yet.
 
 ---
 
@@ -128,15 +130,15 @@ No live ComfyUI connection check, prediction output reading, prediction thumbnai
 
 ## Last Completed Task
 
-Phase 3.2:
-Added minimal color rough image path injection for prediction workflows.
+Phase 3.3:
+Added minimal prediction output folder image reading.
 
 ---
 
 ## Current Next Task
 
-Phase 3.3:
-Read prediction outputs from output folder.
+Phase 3.4:
+Show prediction thumbnails in UI.
 
 ---
 

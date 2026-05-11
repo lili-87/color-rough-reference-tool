@@ -9,6 +9,7 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
     inject_color_rough_path,
     load_prediction_workflow,
     queue_comfyui_prompt,
+    read_prediction_outputs,
     trigger_prediction_workflow,
 )
 
@@ -160,6 +161,36 @@ class ComfyUIPredictionTest(unittest.TestCase):
         prompt = captured["body"]["prompt"]
         self.assertEqual(result.prompt_id, "prediction-002")
         self.assertEqual(prompt["10"]["inputs"]["image"], image_path.resolve().as_posix())
+
+    def test_read_prediction_outputs_returns_supported_images_sorted_by_name(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            output_dir = Path(temp_dir) / "predictions"
+            output_dir.mkdir()
+            (output_dir / "pred_002.webp").write_bytes(b"webp bytes")
+            (output_dir / "notes.txt").write_text("not an image\n", encoding="utf-8")
+            (output_dir / "pred_001.PNG").write_bytes(b"png bytes")
+            (output_dir / "nested").mkdir()
+
+            outputs = read_prediction_outputs(output_dir)
+
+        self.assertEqual([output.file_name for output in outputs], ["pred_001.PNG", "pred_002.webp"])
+        self.assertEqual(outputs[0].file_size_bytes, len(b"png bytes"))
+        self.assertGreater(outputs[0].modified_time, 0)
+
+    def test_read_prediction_outputs_returns_empty_tuple_for_empty_folder(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            output_dir = Path(temp_dir) / "predictions"
+            output_dir.mkdir()
+
+            outputs = read_prediction_outputs(output_dir)
+
+        self.assertEqual(outputs, ())
+
+    def test_read_prediction_outputs_rejects_missing_folder(self) -> None:
+        with self.assertRaises(FileNotFoundError):
+            read_prediction_outputs("missing_predictions")
 
 
 if __name__ == "__main__":
