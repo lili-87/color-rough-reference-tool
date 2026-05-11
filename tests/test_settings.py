@@ -9,6 +9,7 @@ from color_rough_ref_tool.core.settings import (
     normalize_workflow_file_path,
     save_settings,
     with_comfyui_endpoint,
+    with_hand_inpainting_workflow_path,
     with_prediction_workflow_path,
 )
 
@@ -103,6 +104,27 @@ class SettingsStorageTest(unittest.TestCase):
         self.assertEqual(
             updated.hand_inpainting_workflow_path,
             settings.hand_inpainting_workflow_path,
+        )
+        self.assertEqual(updated.default_output_dir, settings.default_output_dir)
+
+    def test_with_hand_inpainting_workflow_path_updates_only_hand_workflow(self) -> None:
+        settings = AppSettings(
+            comfyui_endpoint="http://127.0.0.1:8188",
+            prediction_workflow_path="workflows/prediction.json",
+            hand_inpainting_workflow_path="workflows/hand_inpaint.json",
+            default_output_dir="project_output",
+        )
+
+        updated = with_hand_inpainting_workflow_path(
+            settings,
+            "workflows/new_hand_inpaint.json",
+        )
+
+        self.assertEqual(updated.comfyui_endpoint, settings.comfyui_endpoint)
+        self.assertEqual(updated.prediction_workflow_path, settings.prediction_workflow_path)
+        self.assertEqual(
+            updated.hand_inpainting_workflow_path,
+            "workflows/new_hand_inpaint.json",
         )
         self.assertEqual(updated.default_output_dir, settings.default_output_dir)
 

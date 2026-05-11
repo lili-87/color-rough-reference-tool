@@ -50,6 +50,21 @@ def with_prediction_workflow_path(
     )
 
 
+def with_hand_inpainting_workflow_path(
+    settings: AppSettings,
+    workflow_path: Path | str,
+) -> AppSettings:
+    """Return settings with an updated hand inpainting workflow path."""
+
+    normalized_path = normalize_workflow_file_path(workflow_path)
+    return AppSettings(
+        comfyui_endpoint=settings.comfyui_endpoint,
+        prediction_workflow_path=settings.prediction_workflow_path,
+        hand_inpainting_workflow_path=normalized_path,
+        default_output_dir=settings.default_output_dir,
+    )
+
+
 def normalize_comfyui_endpoint(endpoint: str) -> str:
     """Validate and normalize a ComfyUI HTTP endpoint."""
 

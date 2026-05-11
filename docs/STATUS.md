@@ -64,6 +64,7 @@ It can load default settings when no settings file exists and save user settings
 The default local settings path is `settings/settings.json`, which is ignored by Git.
 It can now validate and update the ComfyUI endpoint setting.
 It can now validate and update the prediction workflow file setting.
+It can now validate and update the hand inpainting workflow file setting.
 
 Project output folder creation now exists in `src/color_rough_ref_tool/core/project_output.py`.
 It creates the standard `project_output` subfolders: `input`, `predictions`, `selected`, `masks`, `hand_refs`, `sheets`, and `metadata`.
@@ -85,7 +86,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No app entry point, UI implementation, hand inpainting workflow file setting, ComfyUI connection test, or ComfyUI execution code exists yet.
+No app entry point, UI implementation, ComfyUI connection test, or ComfyUI execution code exists yet.
 
 ---
 
@@ -118,15 +119,15 @@ No app entry point, UI implementation, hand inpainting workflow file setting, Co
 
 ## Last Completed Task
 
-Phase 2.2:
-Added minimal prediction workflow file setting handling.
+Phase 2.3:
+Added minimal hand inpainting workflow file setting handling.
 
 ---
 
 ## Current Next Task
 
-Phase 2.3:
-Add UI/settings field for hand inpainting workflow file.
+Phase 2.4:
+Add ComfyUI configuration test.
 
 ---
 
