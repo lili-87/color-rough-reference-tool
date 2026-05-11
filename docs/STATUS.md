@@ -67,6 +67,7 @@ It can now validate and update the prediction workflow file setting.
 It can now validate and update the hand inpainting workflow file setting.
 It can now run a minimal ComfyUI configuration check for the endpoint and workflow file settings.
 It can now save the current settings snapshot to `project_output/metadata/settings_snapshot.json`.
+It now has a minimal Tkinter app entry point and basic UI shell for selecting a color rough image, editing settings, checking settings, saving settings, and saving a settings snapshot.
 
 Project output folder creation now exists in `src/color_rough_ref_tool/core/project_output.py`.
 It creates the standard `project_output` subfolders: `input`, `predictions`, `selected`, `masks`, `hand_refs`, `sheets`, and `metadata`.
@@ -88,7 +89,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No app entry point, UI implementation, live ComfyUI connection check, or ComfyUI execution code exists yet.
+No live ComfyUI connection check, ComfyUI execution code, prediction thumbnail UI, or mask editing UI exists yet.
 
 ---
 
@@ -121,8 +122,8 @@ No app entry point, UI implementation, live ComfyUI connection check, or ComfyUI
 
 ## Last Completed Task
 
-Phase 2.5:
-Added minimal settings snapshot metadata saving.
+Phase 2.6:
+Added a minimal app entry point and basic settings/input UI shell.
 
 ---
 

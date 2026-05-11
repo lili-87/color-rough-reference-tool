@@ -24,6 +24,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 - [x] Phase 2.3: Add UI/settings field for hand inpainting workflow file.
 - [x] Phase 2.4: Add ComfyUI configuration test.
 - [x] Phase 2.5: Save settings snapshot metadata.
+- [x] Phase 2.6: Add minimal app entry point and basic settings/input UI shell.
 
 ## Phase 3: Prediction Generation
 

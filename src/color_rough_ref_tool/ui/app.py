@@ -1,0 +1,255 @@
+"""Minimal Tkinter UI shell for settings and color rough selection."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
+
+from color_rough_ref_tool.core.color_rough_input import (
+    build_color_rough_preview,
+    select_color_rough_image,
+)
+from color_rough_ref_tool.core.project_output import prepare_project_output
+from color_rough_ref_tool.core.settings import (
+    AppSettings,
+    check_comfyui_configuration,
+    load_settings,
+    save_settings,
+    save_settings_snapshot,
+    with_comfyui_endpoint,
+    with_hand_inpainting_workflow_path,
+    with_prediction_workflow_path,
+)
+
+
+WINDOW_TITLE = "Color Rough Reference Tool"
+
+
+@dataclass(frozen=True, slots=True)
+class SettingsFormValues:
+    """Raw values entered in the settings form."""
+
+    comfyui_endpoint: str
+    prediction_workflow_path: str
+    hand_inpainting_workflow_path: str
+    default_output_dir: str
+
+
+def build_settings_from_form(values: SettingsFormValues) -> AppSettings:
+    """Build validated settings from the UI form values."""
+
+    settings = AppSettings(default_output_dir=values.default_output_dir.strip() or "project_output")
+    settings = with_comfyui_endpoint(settings, values.comfyui_endpoint)
+    settings = with_prediction_workflow_path(settings, values.prediction_workflow_path)
+    return with_hand_inpainting_workflow_path(settings, values.hand_inpainting_workflow_path)
+
+
+def format_configuration_message(settings: AppSettings) -> str:
+    """Return a short message for the configuration check result."""
+
+    result = check_comfyui_configuration(settings)
+    if result.ok:
+        return "Settings look OK."
+    return "Please fix these settings:\n" + "\n".join(f"- {error}" for error in result.errors)
+
+
+class ColorRoughReferenceApp:
+    """Small desktop shell for the first manual workflow steps."""
+
+    def __init__(self, root: tk.Tk) -> None:
+        self.root = root
+        self.settings = load_settings()
+        self.color_rough_path = tk.StringVar(value="No color rough selected")
+        self.status_message = tk.StringVar(value="Ready")
+
+        self.endpoint_var = tk.StringVar(value=self.settings.comfyui_endpoint)
+        self.prediction_workflow_var = tk.StringVar(value=self.settings.prediction_workflow_path)
+        self.hand_workflow_var = tk.StringVar(value=self.settings.hand_inpainting_workflow_path)
+        self.output_dir_var = tk.StringVar(value=self.settings.default_output_dir)
+
+        self.root.title(WINDOW_TITLE)
+        self.root.minsize(720, 420)
+        self._build_layout()
+
+    def _build_layout(self) -> None:
+        container = ttk.Frame(self.root, padding=16)
+        container.grid(row=0, column=0, sticky="nsew")
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
+        container.columnconfigure(1, weight=1)
+
+        ttk.Label(container, text="Color rough").grid(row=0, column=0, sticky="w")
+        ttk.Label(container, textvariable=self.color_rough_path).grid(
+            row=0,
+            column=1,
+            sticky="ew",
+            padx=(12, 8),
+        )
+        ttk.Button(container, text="Choose image", command=self.choose_color_rough).grid(
+            row=0,
+            column=2,
+            sticky="e",
+        )
+
+        ttk.Separator(container).grid(row=1, column=0, columnspan=3, sticky="ew", pady=14)
+
+        self._add_text_row(container, 2, "ComfyUI endpoint", self.endpoint_var)
+        self._add_file_row(
+            container,
+            3,
+            "Prediction workflow",
+            self.prediction_workflow_var,
+        )
+        self._add_file_row(
+            container,
+            4,
+            "Hand inpainting workflow",
+            self.hand_workflow_var,
+        )
+        self._add_text_row(container, 5, "Project output", self.output_dir_var)
+
+        button_bar = ttk.Frame(container)
+        button_bar.grid(row=6, column=0, columnspan=3, sticky="ew", pady=(16, 8))
+        ttk.Button(button_bar, text="Check settings", command=self.check_settings).pack(
+            side="left",
+            padx=(0, 8),
+        )
+        ttk.Button(button_bar, text="Save settings", command=self.save_current_settings).pack(
+            side="left",
+            padx=(0, 8),
+        )
+        ttk.Button(button_bar, text="Save snapshot", command=self.save_snapshot).pack(side="left")
+
+        ttk.Label(container, textvariable=self.status_message).grid(
+            row=7,
+            column=0,
+            columnspan=3,
+            sticky="ew",
+            pady=(8, 0),
+        )
+
+    def _add_text_row(
+        self,
+        parent: ttk.Frame,
+        row: int,
+        label: str,
+        variable: tk.StringVar,
+    ) -> None:
+        ttk.Label(parent, text=label).grid(row=row, column=0, sticky="w", pady=4)
+        ttk.Entry(parent, textvariable=variable).grid(
+            row=row,
+            column=1,
+            columnspan=2,
+            sticky="ew",
+            padx=(12, 0),
+            pady=4,
+        )
+
+    def _add_file_row(
+        self,
+        parent: ttk.Frame,
+        row: int,
+        label: str,
+        variable: tk.StringVar,
+    ) -> None:
+        ttk.Label(parent, text=label).grid(row=row, column=0, sticky="w", pady=4)
+        ttk.Entry(parent, textvariable=variable).grid(
+            row=row,
+            column=1,
+            sticky="ew",
+            padx=(12, 8),
+            pady=4,
+        )
+        ttk.Button(
+            parent,
+            text="Browse",
+            command=lambda: self.choose_workflow_file(variable),
+        ).grid(row=row, column=2, sticky="e", pady=4)
+
+    def choose_color_rough(self) -> None:
+        path = filedialog.askopenfilename(
+            title="Choose color rough image",
+            filetypes=[
+                ("Supported images", "*.png *.jpg *.jpeg *.webp"),
+                ("All files", "*.*"),
+            ],
+        )
+        if not path:
+            return
+
+        try:
+            selection = select_color_rough_image(path)
+            preview = build_color_rough_preview(selection)
+        except (FileNotFoundError, ValueError, OSError) as error:
+            messagebox.showerror("Color rough", str(error))
+            return
+
+        self.color_rough_path.set(f"{preview.file_name} ({preview.file_size_bytes} bytes)")
+        self.status_message.set(f"Selected: {preview.path}")
+
+    def choose_workflow_file(self, variable: tk.StringVar) -> None:
+        path = filedialog.askopenfilename(
+            title="Choose workflow JSON",
+            filetypes=[
+                ("ComfyUI workflow JSON", "*.json"),
+                ("All files", "*.*"),
+            ],
+        )
+        if path:
+            variable.set(Path(path).as_posix())
+
+    def check_settings(self) -> None:
+        try:
+            settings = self._settings_from_form()
+        except ValueError as error:
+            messagebox.showerror("Settings", str(error))
+            return
+
+        message = format_configuration_message(settings)
+        self.status_message.set(message.replace("\n", " "))
+        if message == "Settings look OK.":
+            messagebox.showinfo("Settings", message)
+        else:
+            messagebox.showerror("Settings", message)
+
+    def save_current_settings(self) -> None:
+        try:
+            settings = self._settings_from_form()
+            saved_path = save_settings(settings)
+        except ValueError as error:
+            messagebox.showerror("Settings", str(error))
+            return
+
+        self.settings = settings
+        self.status_message.set(f"Saved settings: {saved_path}")
+        messagebox.showinfo("Settings", f"Saved settings:\n{saved_path}")
+
+    def save_snapshot(self) -> None:
+        try:
+            settings = self._settings_from_form()
+            output_folders = prepare_project_output(settings.default_output_dir)
+            saved_path = save_settings_snapshot(settings, output_folders.metadata)
+        except ValueError as error:
+            messagebox.showerror("Settings snapshot", str(error))
+            return
+
+        self.status_message.set(f"Saved settings snapshot: {saved_path}")
+        messagebox.showinfo("Settings snapshot", f"Saved settings snapshot:\n{saved_path}")
+
+    def _settings_from_form(self) -> AppSettings:
+        return build_settings_from_form(
+            SettingsFormValues(
+                comfyui_endpoint=self.endpoint_var.get(),
+                prediction_workflow_path=self.prediction_workflow_var.get(),
+                hand_inpainting_workflow_path=self.hand_workflow_var.get(),
+                default_output_dir=self.output_dir_var.get(),
+            )
+        )
+
+
+def main() -> None:
+    root = tk.Tk()
+    ColorRoughReferenceApp(root)
+    root.mainloop()
