@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import shutil
 from typing import Any, Callable
 from urllib.error import URLError
 from urllib.request import Request, urlopen
@@ -50,6 +51,14 @@ class PredictionOutputReadResult:
     @property
     def ok(self) -> bool:
         return not self.messages
+
+
+@dataclass(frozen=True, slots=True)
+class SavedPredictionCandidate:
+    """A selected prediction candidate copied into the project output."""
+
+    source_path: Path
+    saved_path: Path
 
 
 def trigger_prediction_workflow(
@@ -155,6 +164,28 @@ def read_prediction_outputs_safely(output_dir: Path | str) -> PredictionOutputRe
         )
 
     return PredictionOutputReadResult(images=images, messages=())
+
+
+def save_selected_prediction_candidate(
+    candidate_path: Path | str,
+    selected_dir: Path | str,
+) -> SavedPredictionCandidate:
+    """Copy a selected prediction image into the project selected folder."""
+
+    source_path = Path(candidate_path)
+    if not source_path.exists():
+        raise FileNotFoundError(f"Selected prediction does not exist: {source_path}")
+    if not source_path.is_file():
+        raise ValueError(f"Selected prediction path must be a file: {source_path}")
+    if source_path.suffix.lower() not in PREDICTION_IMAGE_EXTENSIONS:
+        raise ValueError(f"Selected prediction must be a supported image file: {source_path}")
+
+    destination_dir = Path(selected_dir)
+    destination_dir.mkdir(parents=True, exist_ok=True)
+    saved_path = destination_dir / source_path.name
+    shutil.copy2(source_path, saved_path)
+
+    return SavedPredictionCandidate(source_path=source_path, saved_path=saved_path)
 
 
 def queue_comfyui_prompt(

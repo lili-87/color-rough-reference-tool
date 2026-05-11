@@ -25,7 +25,9 @@ from color_rough_ref_tool.core.settings import (
 from color_rough_ref_tool.integrations.comfyui.prediction import (
     PredictionOutputImage,
     PredictionOutputReadResult,
+    SavedPredictionCandidate,
     read_prediction_outputs_safely,
+    save_selected_prediction_candidate,
 )
 
 
@@ -87,6 +89,12 @@ def format_selected_prediction_message(output: PredictionOutputImage) -> str:
     """Return a short status message for the selected prediction candidate."""
 
     return f"Selected prediction: {output.file_name}"
+
+
+def format_saved_prediction_message(saved: SavedPredictionCandidate) -> str:
+    """Return a short status message after saving the selected prediction."""
+
+    return f"Saved selected prediction: {saved.saved_path.as_posix()}"
 
 
 class ColorRoughReferenceApp:
@@ -161,6 +169,10 @@ class ColorRoughReferenceApp:
             padx=(0, 8),
         )
         ttk.Button(button_bar, text="Load predictions", command=self.load_prediction_outputs).pack(
+            side="left",
+            padx=(0, 8),
+        )
+        ttk.Button(button_bar, text="Save selected", command=self.save_selected_prediction).pack(
             side="left",
         )
 
@@ -344,6 +356,26 @@ class ColorRoughReferenceApp:
     def select_prediction(self, output: PredictionOutputImage) -> None:
         self.selected_prediction_path.set(output.path.as_posix())
         self.status_message.set(format_selected_prediction_message(output))
+
+    def save_selected_prediction(self) -> None:
+        selected_path = self.selected_prediction_path.get()
+        if not selected_path:
+            message = "Choose a prediction candidate first."
+            self.status_message.set(message)
+            messagebox.showinfo("Selected prediction", message)
+            return
+
+        try:
+            settings = self._settings_from_form()
+            output_folders = prepare_project_output(settings.default_output_dir)
+            saved = save_selected_prediction_candidate(selected_path, output_folders.selected)
+        except (FileNotFoundError, OSError, ValueError) as error:
+            messagebox.showerror("Selected prediction", str(error))
+            return
+
+        message = format_saved_prediction_message(saved)
+        self.status_message.set(message)
+        messagebox.showinfo("Selected prediction", f"Saved selected prediction:\n{saved.saved_path}")
 
     def _load_thumbnail_image(self, path: Path) -> tk.PhotoImage | None:
         try:

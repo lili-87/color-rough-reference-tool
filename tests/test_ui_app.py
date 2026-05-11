@@ -5,6 +5,7 @@ from color_rough_ref_tool.core.settings import AppSettings
 from color_rough_ref_tool.integrations.comfyui.prediction import (
     PredictionOutputImage,
     PredictionOutputReadResult,
+    SavedPredictionCandidate,
 )
 from color_rough_ref_tool.ui.app import (
     SettingsFormValues,
@@ -12,6 +13,7 @@ from color_rough_ref_tool.ui.app import (
     format_configuration_message,
     format_prediction_output_count,
     format_prediction_output_result,
+    format_saved_prediction_message,
     format_selected_prediction_message,
     prediction_output_folder,
 )
@@ -92,6 +94,17 @@ class UiAppTest(unittest.TestCase):
         self.assertEqual(
             format_selected_prediction_message(output),
             "Selected prediction: pred_002.png",
+        )
+
+    def test_format_saved_prediction_message_reports_saved_path(self) -> None:
+        saved = SavedPredictionCandidate(
+            source_path=Path("project_output/predictions/pred_002.png"),
+            saved_path=Path("project_output/selected/pred_002.png"),
+        )
+
+        self.assertEqual(
+            format_saved_prediction_message(saved),
+            "Saved selected prediction: project_output/selected/pred_002.png",
         )
 
 

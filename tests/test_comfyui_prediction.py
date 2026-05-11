@@ -11,6 +11,7 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
     queue_comfyui_prompt,
     read_prediction_outputs,
     read_prediction_outputs_safely,
+    save_selected_prediction_candidate,
     trigger_prediction_workflow,
 )
 
@@ -222,6 +223,33 @@ class ComfyUIPredictionTest(unittest.TestCase):
 
         self.assertFalse(result.ok)
         self.assertIn("must be a folder", result.messages[0])
+
+    def test_save_selected_prediction_candidate_copies_image_to_selected_folder(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            temp_path = Path(temp_dir)
+            source_path = temp_path / "pred_002.PNG"
+            selected_dir = temp_path / "project_output" / "selected"
+            source_path.write_bytes(b"selected prediction bytes")
+
+            saved = save_selected_prediction_candidate(source_path, selected_dir)
+
+            self.assertEqual(saved.source_path, source_path)
+            self.assertEqual(saved.saved_path, selected_dir / "pred_002.PNG")
+            self.assertEqual(saved.saved_path.read_bytes(), b"selected prediction bytes")
+
+    def test_save_selected_prediction_candidate_rejects_missing_file(self) -> None:
+        with self.assertRaises(FileNotFoundError):
+            save_selected_prediction_candidate("missing_prediction.png", "project_output/selected")
+
+    def test_save_selected_prediction_candidate_rejects_unsupported_file(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            source_path = Path(temp_dir) / "pred_002.txt"
+            source_path.write_text("not an image\n", encoding="utf-8")
+
+            with self.assertRaises(ValueError):
+                save_selected_prediction_candidate(source_path, Path(temp_dir) / "selected")
 
 
 if __name__ == "__main__":
