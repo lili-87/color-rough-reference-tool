@@ -17,6 +17,7 @@ from color_rough_ref_tool.ui.app import (
     format_mask_candidate_message,
     format_saved_prediction_message,
     format_selected_prediction_message,
+    normalize_mask_brush_size,
     prediction_output_folder,
 )
 
@@ -121,6 +122,12 @@ class UiAppTest(unittest.TestCase):
             format_mask_candidate_message(metadata),
             "Loaded selected candidate for mask editing: pred_002.png",
         )
+
+    def test_normalize_mask_brush_size_keeps_small_supported_range(self) -> None:
+        self.assertEqual(normalize_mask_brush_size(0), 1)
+        self.assertEqual(normalize_mask_brush_size(18), 18)
+        self.assertEqual(normalize_mask_brush_size(999), 80)
+        self.assertEqual(normalize_mask_brush_size("not a number"), 18)
 
 
 if __name__ == "__main__":

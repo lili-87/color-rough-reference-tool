@@ -39,6 +39,9 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
 WINDOW_TITLE = "Color Rough Reference Tool"
 PREDICTION_THUMBNAIL_MAX_SIZE = 160
 MASK_PREVIEW_MAX_SIZE = 320
+DEFAULT_MASK_BRUSH_SIZE = 18
+MIN_MASK_BRUSH_SIZE = 1
+MAX_MASK_BRUSH_SIZE = 80
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,6 +112,16 @@ def format_mask_candidate_message(metadata: SelectedCandidateMetadata) -> str:
     return f"Loaded selected candidate for mask editing: {metadata.file_name}"
 
 
+def normalize_mask_brush_size(value: int | str) -> int:
+    """Return a brush size within the small supported UI range."""
+
+    try:
+        brush_size = int(value)
+    except (TypeError, ValueError):
+        return DEFAULT_MASK_BRUSH_SIZE
+    return max(MIN_MASK_BRUSH_SIZE, min(MAX_MASK_BRUSH_SIZE, brush_size))
+
+
 class ColorRoughReferenceApp:
     """Small desktop shell for the first manual workflow steps."""
 
@@ -120,11 +133,14 @@ class ColorRoughReferenceApp:
         self.selected_prediction_path = tk.StringVar(value="")
         self.prediction_thumbnails: list[tk.PhotoImage] = []
         self.mask_preview_image: tk.PhotoImage | None = None
+        self.mask_canvas: tk.Canvas | None = None
+        self.last_mask_point: tuple[int, int] | None = None
 
         self.endpoint_var = tk.StringVar(value=self.settings.comfyui_endpoint)
         self.prediction_workflow_var = tk.StringVar(value=self.settings.prediction_workflow_path)
         self.hand_workflow_var = tk.StringVar(value=self.settings.hand_inpainting_workflow_path)
         self.output_dir_var = tk.StringVar(value=self.settings.default_output_dir)
+        self.mask_brush_size_var = tk.IntVar(value=DEFAULT_MASK_BRUSH_SIZE)
 
         self.root.title(WINDOW_TITLE)
         self.root.minsize(760, 560)
@@ -210,9 +226,22 @@ class ColorRoughReferenceApp:
             mask_frame,
             text="Load selected for mask",
             command=self.load_selected_for_mask,
-        ).grid(row=0, column=0, sticky="w")
+        ).grid(row=0, column=0, sticky="w", padx=(0, 8))
+        ttk.Label(mask_frame, text="Brush").grid(row=0, column=1, sticky="w")
+        ttk.Spinbox(
+            mask_frame,
+            from_=MIN_MASK_BRUSH_SIZE,
+            to=MAX_MASK_BRUSH_SIZE,
+            textvariable=self.mask_brush_size_var,
+            width=5,
+        ).grid(row=0, column=2, sticky="w", padx=(4, 8))
+        ttk.Button(
+            mask_frame,
+            text="Clear mask",
+            command=self.clear_mask_drawing,
+        ).grid(row=0, column=3, sticky="w")
         self.mask_preview_frame = ttk.Frame(mask_frame, padding=(0, 8, 0, 0))
-        self.mask_preview_frame.grid(row=1, column=0, sticky="nw")
+        self.mask_preview_frame.grid(row=1, column=0, columnspan=4, sticky="nw")
         ttk.Label(
             self.mask_preview_frame,
             text="No selected candidate loaded for mask editing",
@@ -442,6 +471,8 @@ class ColorRoughReferenceApp:
         for child in self.mask_preview_frame.winfo_children():
             child.destroy()
         self.mask_preview_image = self._load_image_preview(selected_path, MASK_PREVIEW_MAX_SIZE)
+        self.mask_canvas = None
+        self.last_mask_point = None
 
         if self.mask_preview_image is None:
             ttk.Label(
@@ -449,16 +480,80 @@ class ColorRoughReferenceApp:
                 text="[preview unavailable]",
             ).grid(row=0, column=0, sticky="w")
         else:
-            ttk.Label(self.mask_preview_frame, image=self.mask_preview_image).grid(
+            self.mask_canvas = tk.Canvas(
+                self.mask_preview_frame,
+                width=self.mask_preview_image.width(),
+                height=self.mask_preview_image.height(),
+                highlightthickness=1,
+                highlightbackground="#999999",
+            )
+            self.mask_canvas.grid(
                 row=0,
                 column=0,
                 sticky="w",
             )
+            self.mask_canvas.create_image(0, 0, anchor="nw", image=self.mask_preview_image)
+            self.mask_canvas.bind("<ButtonPress-1>", self.start_mask_stroke)
+            self.mask_canvas.bind("<B1-Motion>", self.draw_mask_stroke)
+            self.mask_canvas.bind("<ButtonRelease-1>", self.end_mask_stroke)
         ttk.Label(self.mask_preview_frame, text=metadata.file_name).grid(
             row=1,
             column=0,
             sticky="w",
             pady=(4, 0),
+        )
+
+    def start_mask_stroke(self, event: tk.Event) -> None:
+        self.last_mask_point = (int(event.x), int(event.y))
+        self._draw_mask_dot(int(event.x), int(event.y))
+
+    def draw_mask_stroke(self, event: tk.Event) -> None:
+        if self.mask_canvas is None:
+            return
+
+        current_point = (int(event.x), int(event.y))
+        if self.last_mask_point is None:
+            self.last_mask_point = current_point
+            self._draw_mask_dot(*current_point)
+            return
+
+        brush_size = normalize_mask_brush_size(self.mask_brush_size_var.get())
+        self.mask_canvas.create_line(
+            self.last_mask_point[0],
+            self.last_mask_point[1],
+            current_point[0],
+            current_point[1],
+            fill="#ff3333",
+            width=brush_size,
+            tags=("mask_stroke",),
+        )
+        self.last_mask_point = current_point
+
+    def end_mask_stroke(self, event: tk.Event) -> None:
+        self.last_mask_point = None
+
+    def clear_mask_drawing(self) -> None:
+        if self.mask_canvas is None:
+            self.status_message.set("No mask drawing to clear.")
+            return
+
+        self.mask_canvas.delete("mask_stroke")
+        self.status_message.set("Cleared mask drawing.")
+
+    def _draw_mask_dot(self, x: int, y: int) -> None:
+        if self.mask_canvas is None:
+            return
+
+        brush_size = normalize_mask_brush_size(self.mask_brush_size_var.get())
+        radius = max(1, brush_size // 2)
+        self.mask_canvas.create_oval(
+            x - radius,
+            y - radius,
+            x + radius,
+            y + radius,
+            fill="#ff3333",
+            outline="#ff3333",
+            tags=("mask_stroke",),
         )
 
     def _load_thumbnail_image(self, path: Path) -> tk.PhotoImage | None:

@@ -43,7 +43,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 ## Phase 5: Hand Mask Editing
 
 - [x] Phase 5.1: Display selected candidate for mask editing.
-- [ ] Phase 5.2: Add simple hand mask drawing tool.
+- [x] Phase 5.2: Add simple hand mask drawing tool.
 - [ ] Phase 5.3: Add simple rectangle-based mask option (optional if easy).
 - [ ] Phase 5.4: Save mask image into `masks/`.
 

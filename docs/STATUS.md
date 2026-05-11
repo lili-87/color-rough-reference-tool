@@ -97,6 +97,7 @@ The minimal UI can now select one loaded prediction candidate with a radio butto
 The minimal UI can now copy the selected prediction candidate into `project_output/selected` while keeping the original file name.
 It now saves minimal selected-candidate metadata to `project_output/metadata/selected_candidate.json`.
 The minimal UI can now load the saved selected candidate metadata and show the selected candidate in a simple mask editing preview area.
+The mask editing preview now has a minimal brush tool for drawing red mask strokes on the displayed selected candidate.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
@@ -104,7 +105,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No live ComfyUI connection check, generation completion waiting, mask drawing, mask saving, or hand inpainting execution exists yet.
+No live ComfyUI connection check, generation completion waiting, mask saving, or hand inpainting execution exists yet.
 
 ---
 
@@ -137,15 +138,15 @@ No live ComfyUI connection check, generation completion waiting, mask drawing, m
 
 ## Last Completed Task
 
-Phase 5.1:
-Added minimal selected candidate display for the mask editing step.
+Phase 5.2:
+Added minimal hand mask brush drawing in the mask editing preview.
 
 ---
 
 ## Current Next Task
 
-Phase 5.2:
-Add simple hand mask drawing tool.
+Phase 5.3:
+Add simple rectangle-based mask option.
 
 ---
 
