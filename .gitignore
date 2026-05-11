@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.next/
+out/
+
+# Logs
+*.log
+logs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# App outputs
+output/
+outputs/
+project_output/
+generated/
+predictions/
+selected/
+masks/
+hand_refs/
+sheets/
+metadata/
+
+# ComfyUI / model related
+ComfyUI/
+models/
+checkpoints/
+loras/
+controlnet/
+vae/
+embeddings/
+
+# Temporary files
+tmp/
+temp/
+.cache/
+
+# Environment / local settings
+.env
+.env.local
+config/local_settings.json
+settings.local.json
