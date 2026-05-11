@@ -15,7 +15,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 - [x] Phase 1.1: Add color rough image selection.
 - [x] Phase 1.2: Add input preview.
 - [x] Phase 1.3: Add input image copy/save into project output.
-- [ ] Phase 1.4: Validate supported image formats.
+- [x] Phase 1.4: Validate supported image formats.
 
 ## Phase 2: ComfyUI Configuration
 

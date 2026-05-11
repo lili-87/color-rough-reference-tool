@@ -9,6 +9,9 @@ import shutil
 from color_rough_ref_tool.core.project_output import ProjectOutputFolders
 
 
+SUPPORTED_COLOR_ROUGH_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".webp"})
+
+
 @dataclass(frozen=True, slots=True)
 class ColorRoughSelection:
     """A user-selected color rough image file."""
@@ -46,8 +49,22 @@ def select_color_rough_image(path: Path | str) -> ColorRoughSelection:
         raise FileNotFoundError(f"Color rough image does not exist: {image_path}")
     if not image_path.is_file():
         raise ValueError(f"Color rough path must be a file: {image_path}")
+    validate_color_rough_format(image_path)
 
     return ColorRoughSelection(path=image_path)
+
+
+def validate_color_rough_format(path: Path | str) -> None:
+    """Validate that the selected image uses a supported file extension."""
+
+    image_path = Path(path)
+    extension = image_path.suffix.lower()
+    if extension not in SUPPORTED_COLOR_ROUGH_EXTENSIONS:
+        supported = ", ".join(sorted(SUPPORTED_COLOR_ROUGH_EXTENSIONS))
+        raise ValueError(
+            f"Unsupported color rough image format: {extension or '(none)'}. "
+            f"Supported formats: {supported}"
+        )
 
 
 def build_color_rough_preview(

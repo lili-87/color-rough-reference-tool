@@ -3,9 +3,11 @@ import tempfile
 import unittest
 
 from color_rough_ref_tool.core.color_rough_input import (
+    SUPPORTED_COLOR_ROUGH_EXTENSIONS,
     build_color_rough_preview,
     save_color_rough_to_project_input,
     select_color_rough_image,
+    validate_color_rough_format,
 )
 from color_rough_ref_tool.core.project_output import prepare_project_output
 
@@ -34,6 +36,30 @@ class ColorRoughInputTest(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
             with self.assertRaises(ValueError):
                 select_color_rough_image(temp_dir)
+
+    def test_select_color_rough_image_accepts_supported_formats(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            for extension in SUPPORTED_COLOR_ROUGH_EXTENSIONS:
+                image_path = Path(temp_dir) / f"rough{extension.upper()}"
+                image_path.write_bytes(b"placeholder image bytes")
+
+                selection = select_color_rough_image(image_path)
+
+                self.assertEqual(selection.path, image_path)
+
+    def test_select_color_rough_image_rejects_unsupported_format(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            image_path = Path(temp_dir) / "rough.gif"
+            image_path.write_bytes(b"placeholder image bytes")
+
+            with self.assertRaises(ValueError):
+                select_color_rough_image(image_path)
+
+    def test_validate_color_rough_format_rejects_missing_extension(self) -> None:
+        with self.assertRaises(ValueError):
+            validate_color_rough_format("rough")
 
     def test_build_color_rough_preview_returns_display_metadata(self) -> None:
         TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)

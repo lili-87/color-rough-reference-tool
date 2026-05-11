@@ -81,8 +81,9 @@ Minimal color rough image selection handling now exists in `src/color_rough_ref_
 It records a user-selected existing file path as the current color rough.
 The same module can now build minimal preview metadata for the selected input image, including file name, absolute path, file URI, and file size.
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
+It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No app entry point, UI implementation, supported image format validation, or ComfyUI execution code exists yet.
+No app entry point, UI implementation, ComfyUI settings UI, or ComfyUI execution code exists yet.
 
 ---
 
@@ -115,15 +116,15 @@ No app entry point, UI implementation, supported image format validation, or Com
 
 ## Last Completed Task
 
-Phase 1.3:
-Added selected color rough copy/save into project output input folder.
+Phase 1.4:
+Added supported color rough image format validation.
 
 ---
 
 ## Current Next Task
 
-Phase 1.4:
-Validate supported image formats.
+Phase 2.1:
+Add UI/settings field for ComfyUI path or endpoint.
 
 ---
 
