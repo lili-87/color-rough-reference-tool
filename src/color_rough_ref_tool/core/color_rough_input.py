@@ -17,6 +17,16 @@ class ColorRoughSelection:
         return self.path.name
 
 
+@dataclass(frozen=True, slots=True)
+class ColorRoughPreview:
+    """Minimal file details needed to show a selected color rough."""
+
+    path: Path
+    file_name: str
+    file_uri: str
+    file_size_bytes: int
+
+
 def select_color_rough_image(path: Path | str) -> ColorRoughSelection:
     """Return a color rough selection for an existing file path."""
 
@@ -27,3 +37,17 @@ def select_color_rough_image(path: Path | str) -> ColorRoughSelection:
         raise ValueError(f"Color rough path must be a file: {image_path}")
 
     return ColorRoughSelection(path=image_path)
+
+
+def build_color_rough_preview(
+    selection: ColorRoughSelection,
+) -> ColorRoughPreview:
+    """Build preview metadata for the selected color rough image."""
+
+    absolute_path = selection.path.resolve()
+    return ColorRoughPreview(
+        path=absolute_path,
+        file_name=absolute_path.name,
+        file_uri=absolute_path.as_uri(),
+        file_size_bytes=absolute_path.stat().st_size,
+    )
