@@ -36,7 +36,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 
 ## Phase 4: Candidate Selection
 
-- [ ] Phase 4.1: Add prediction candidate selection UI.
+- [x] Phase 4.1: Add prediction candidate selection UI.
 - [ ] Phase 4.2: Save selected candidate into `selected/`.
 - [ ] Phase 4.3: Store selected candidate in metadata.
 

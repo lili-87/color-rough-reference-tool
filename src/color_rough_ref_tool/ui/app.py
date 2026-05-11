@@ -83,6 +83,12 @@ def format_prediction_output_result(result: PredictionOutputReadResult) -> str:
     return " ".join(result.messages)
 
 
+def format_selected_prediction_message(output: PredictionOutputImage) -> str:
+    """Return a short status message for the selected prediction candidate."""
+
+    return f"Selected prediction: {output.file_name}"
+
+
 class ColorRoughReferenceApp:
     """Small desktop shell for the first manual workflow steps."""
 
@@ -91,6 +97,7 @@ class ColorRoughReferenceApp:
         self.settings = load_settings()
         self.color_rough_path = tk.StringVar(value="No color rough selected")
         self.status_message = tk.StringVar(value="Ready")
+        self.selected_prediction_path = tk.StringVar(value="")
         self.prediction_thumbnails: list[tk.PhotoImage] = []
 
         self.endpoint_var = tk.StringVar(value=self.settings.comfyui_endpoint)
@@ -303,6 +310,7 @@ class ColorRoughReferenceApp:
         for child in self.prediction_grid.winfo_children():
             child.destroy()
         self.prediction_thumbnails.clear()
+        self.selected_prediction_path.set("")
 
         if not outputs:
             ttk.Label(
@@ -325,6 +333,17 @@ class ColorRoughReferenceApp:
                 ttk.Label(item_frame, image=image).grid(row=0, column=0)
 
             ttk.Label(item_frame, text=output.file_name).grid(row=1, column=0, pady=(4, 0))
+            ttk.Radiobutton(
+                item_frame,
+                text="Select",
+                variable=self.selected_prediction_path,
+                value=output.path.as_posix(),
+                command=lambda candidate=output: self.select_prediction(candidate),
+            ).grid(row=2, column=0, pady=(4, 0))
+
+    def select_prediction(self, output: PredictionOutputImage) -> None:
+        self.selected_prediction_path.set(output.path.as_posix())
+        self.status_message.set(format_selected_prediction_message(output))
 
     def _load_thumbnail_image(self, path: Path) -> tk.PhotoImage | None:
         try:

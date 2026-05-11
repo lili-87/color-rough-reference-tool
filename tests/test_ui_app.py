@@ -12,6 +12,7 @@ from color_rough_ref_tool.ui.app import (
     format_configuration_message,
     format_prediction_output_count,
     format_prediction_output_result,
+    format_selected_prediction_message,
     prediction_output_folder,
 )
 
@@ -78,6 +79,19 @@ class UiAppTest(unittest.TestCase):
         self.assertEqual(
             format_prediction_output_result(result),
             "No prediction images were found in: project_output/predictions",
+        )
+
+    def test_format_selected_prediction_message_reports_file_name(self) -> None:
+        output = PredictionOutputImage(
+            path=Path("predictions/pred_002.png"),
+            file_name="pred_002.png",
+            file_size_bytes=20,
+            modified_time=2.0,
+        )
+
+        self.assertEqual(
+            format_selected_prediction_message(output),
+            "Selected prediction: pred_002.png",
         )
 
 
