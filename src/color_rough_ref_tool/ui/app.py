@@ -12,6 +12,7 @@ from color_rough_ref_tool.core.color_rough_input import (
     select_color_rough_image,
 )
 from color_rough_ref_tool.core.project_output import prepare_project_output
+from color_rough_ref_tool.core.selection_metadata import save_selected_candidate_metadata
 from color_rough_ref_tool.core.settings import (
     AppSettings,
     check_comfyui_configuration,
@@ -369,13 +370,21 @@ class ColorRoughReferenceApp:
             settings = self._settings_from_form()
             output_folders = prepare_project_output(settings.default_output_dir)
             saved = save_selected_prediction_candidate(selected_path, output_folders.selected)
+            metadata_path = save_selected_candidate_metadata(
+                saved.source_path,
+                saved.saved_path,
+                output_folders.metadata,
+            )
         except (FileNotFoundError, OSError, ValueError) as error:
             messagebox.showerror("Selected prediction", str(error))
             return
 
         message = format_saved_prediction_message(saved)
         self.status_message.set(message)
-        messagebox.showinfo("Selected prediction", f"Saved selected prediction:\n{saved.saved_path}")
+        messagebox.showinfo(
+            "Selected prediction",
+            f"Saved selected prediction:\n{saved.saved_path}\n\nMetadata:\n{metadata_path}",
+        )
 
     def _load_thumbnail_image(self, path: Path) -> tk.PhotoImage | None:
         try:

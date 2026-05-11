@@ -95,6 +95,7 @@ Images that Tkinter can preview are shown as small thumbnails; unsupported previ
 Missing, empty, or invalid prediction output folders are now handled with simple status messages instead of crashing the UI.
 The minimal UI can now select one loaded prediction candidate with a radio button and show the selected file name in the status area.
 The minimal UI can now copy the selected prediction candidate into `project_output/selected` while keeping the original file name.
+It now saves minimal selected-candidate metadata to `project_output/metadata/selected_candidate.json`.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
@@ -102,7 +103,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No live ComfyUI connection check, generation completion waiting, selected-candidate metadata, or mask editing UI exists yet.
+No live ComfyUI connection check, generation completion waiting, or mask editing UI exists yet.
 
 ---
 
@@ -135,15 +136,15 @@ No live ComfyUI connection check, generation completion waiting, selected-candid
 
 ## Last Completed Task
 
-Phase 4.2:
-Added minimal selected prediction candidate saving into `project_output/selected`.
+Phase 4.3:
+Added minimal selected prediction candidate metadata saving.
 
 ---
 
 ## Current Next Task
 
-Phase 4.3:
-Store selected candidate in metadata.
+Phase 5.1:
+Display selected candidate for mask editing.
 
 ---
 
