@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 
 DEFAULT_SETTINGS_PATH = Path("settings") / "settings.json"
+SETTINGS_SNAPSHOT_FILENAME = "settings_snapshot.json"
 WORKFLOW_FILE_EXTENSION = ".json"
 
 
@@ -153,6 +154,16 @@ def save_settings(
         encoding="utf-8",
     )
     return settings_path
+
+
+def save_settings_snapshot(
+    settings: AppSettings,
+    metadata_dir: Path | str,
+) -> Path:
+    """Save the current settings into project metadata and return the saved path."""
+
+    snapshot_path = Path(metadata_dir) / SETTINGS_SNAPSHOT_FILENAME
+    return save_settings(settings, snapshot_path)
 
 
 def _known_settings(raw_settings: dict[str, Any]) -> dict[str, Any]:

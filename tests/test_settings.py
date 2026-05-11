@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import tempfile
 import unittest
 
@@ -9,6 +10,7 @@ from color_rough_ref_tool.core.settings import (
     normalize_comfyui_endpoint,
     normalize_workflow_file_path,
     save_settings,
+    save_settings_snapshot,
     with_comfyui_endpoint,
     with_hand_inpainting_workflow_path,
     with_prediction_workflow_path,
@@ -150,6 +152,29 @@ class SettingsStorageTest(unittest.TestCase):
         self.assertIn("ComfyUI endpoint:", result.errors[0])
         self.assertIn("Prediction workflow file:", result.errors[1])
         self.assertIn("Hand inpainting workflow file:", result.errors[2])
+
+    def test_save_settings_snapshot_writes_project_metadata_file(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            metadata_dir = Path(temp_dir) / "project_output" / "metadata"
+            settings = AppSettings(
+                comfyui_endpoint="http://localhost:8188",
+                prediction_workflow_path="workflows/prediction.json",
+                hand_inpainting_workflow_path="workflows/hand_inpaint.json",
+                default_output_dir="project_output",
+            )
+
+            snapshot_path = save_settings_snapshot(settings, metadata_dir)
+            snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(snapshot_path, metadata_dir / "settings_snapshot.json")
+        self.assertEqual(snapshot["comfyui_endpoint"], "http://localhost:8188")
+        self.assertEqual(snapshot["prediction_workflow_path"], "workflows/prediction.json")
+        self.assertEqual(
+            snapshot["hand_inpainting_workflow_path"],
+            "workflows/hand_inpaint.json",
+        )
+        self.assertEqual(snapshot["default_output_dir"], "project_output")
 
 
 if __name__ == "__main__":
