@@ -44,7 +44,26 @@ Expected generation stack:
 
 Documentation baseline created.
 
-Implementation should begin by inspecting the current project structure and confirming the app foundation.
+The repository now has a minimal application folder structure.
+
+Current structure:
+
+```text
+src/
+└ color_rough_ref_tool/
+   ├ core/
+   ├ integrations/
+   │  └ comfyui/
+   └ ui/
+tests/
+docs/
+```
+
+Basic settings storage now exists in `src/color_rough_ref_tool/core/settings.py`.
+It can load default settings when no settings file exists and save user settings as JSON.
+The default local settings path is `settings/settings.json`, which is ignored by Git.
+
+No app entry point, output folder creation, UI implementation, image-loading code, or ComfyUI execution code exists yet.
 
 ---
 
@@ -77,14 +96,15 @@ Implementation should begin by inspecting the current project structure and conf
 
 ## Last Completed Task
 
-Documentation set prepared for the approved concept.
+Phase 0.3:
+Added basic JSON settings storage.
 
 ---
 
 ## Current Next Task
 
-Phase 0.1:
-Inspect the current project structure without changing code.
+Phase 0.4:
+Add output folder creation logic.
 
 ---
 

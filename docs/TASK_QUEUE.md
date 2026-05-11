@@ -4,9 +4,9 @@ Codex should work on the next unfinished task only unless the user says otherwis
 
 ## Phase 0: Foundation
 
-- [ ] Phase 0.1: Inspect the current project structure without changing code.
-- [ ] Phase 0.2: Create or confirm project folder structure for the standalone app.
-- [ ] Phase 0.3: Add basic settings storage.
+- [x] Phase 0.1: Inspect the current project structure without changing code.
+- [x] Phase 0.2: Create or confirm project folder structure for the standalone app.
+- [x] Phase 0.3: Add basic settings storage.
 - [ ] Phase 0.4: Add output folder creation logic.
 - [ ] Phase 0.5: Add workflow file placeholder handling.
 

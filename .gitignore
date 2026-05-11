@@ -54,4 +54,5 @@ temp/
 .env
 .env.local
 config/local_settings.json
+settings/settings.json
 settings.local.json
