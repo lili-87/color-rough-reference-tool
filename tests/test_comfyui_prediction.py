@@ -10,6 +10,7 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
     load_prediction_workflow,
     queue_comfyui_prompt,
     read_prediction_outputs,
+    read_prediction_outputs_safely,
     trigger_prediction_workflow,
 )
 
@@ -191,6 +192,36 @@ class ComfyUIPredictionTest(unittest.TestCase):
     def test_read_prediction_outputs_rejects_missing_folder(self) -> None:
         with self.assertRaises(FileNotFoundError):
             read_prediction_outputs("missing_predictions")
+
+    def test_read_prediction_outputs_safely_reports_empty_folder(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            output_dir = Path(temp_dir) / "predictions"
+            output_dir.mkdir()
+
+            result = read_prediction_outputs_safely(output_dir)
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.images, ())
+        self.assertIn("No prediction images were found", result.messages[0])
+
+    def test_read_prediction_outputs_safely_reports_missing_folder(self) -> None:
+        result = read_prediction_outputs_safely("missing_predictions")
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.images, ())
+        self.assertIn("Prediction output folder does not exist", result.messages[0])
+
+    def test_read_prediction_outputs_safely_reports_non_folder_path(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            output_path = Path(temp_dir) / "predictions.txt"
+            output_path.write_text("not a folder\n", encoding="utf-8")
+
+            result = read_prediction_outputs_safely(output_path)
+
+        self.assertFalse(result.ok)
+        self.assertIn("must be a folder", result.messages[0])
 
 
 if __name__ == "__main__":

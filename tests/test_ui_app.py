@@ -2,12 +2,16 @@ from pathlib import Path
 import unittest
 
 from color_rough_ref_tool.core.settings import AppSettings
-from color_rough_ref_tool.integrations.comfyui.prediction import PredictionOutputImage
+from color_rough_ref_tool.integrations.comfyui.prediction import (
+    PredictionOutputImage,
+    PredictionOutputReadResult,
+)
 from color_rough_ref_tool.ui.app import (
     SettingsFormValues,
     build_settings_from_form,
     format_configuration_message,
     format_prediction_output_count,
+    format_prediction_output_result,
     prediction_output_folder,
 )
 
@@ -64,6 +68,17 @@ class UiAppTest(unittest.TestCase):
 
         self.assertEqual(format_prediction_output_count(()), "Loaded 0 prediction images.")
         self.assertEqual(format_prediction_output_count((output,)), "Loaded 1 prediction image.")
+
+    def test_format_prediction_output_result_reports_messages(self) -> None:
+        result = PredictionOutputReadResult(
+            images=(),
+            messages=("No prediction images were found in: project_output/predictions",),
+        )
+
+        self.assertEqual(
+            format_prediction_output_result(result),
+            "No prediction images were found in: project_output/predictions",
+        )
 
 
 if __name__ == "__main__":

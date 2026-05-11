@@ -32,7 +32,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 - [x] Phase 3.2: Pass input color rough to prediction workflow.
 - [x] Phase 3.3: Read prediction outputs from output folder.
 - [x] Phase 3.4: Show prediction thumbnails in UI.
-- [ ] Phase 3.5: Handle missing or failed generation outputs gracefully.
+- [x] Phase 3.5: Handle missing or failed generation outputs gracefully.
 
 ## Phase 4: Candidate Selection
 

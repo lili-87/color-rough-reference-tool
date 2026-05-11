@@ -40,6 +40,18 @@ class PredictionOutputImage:
     modified_time: float
 
 
+@dataclass(frozen=True, slots=True)
+class PredictionOutputReadResult:
+    """Safe result for reading prediction output images."""
+
+    images: tuple[PredictionOutputImage, ...]
+    messages: tuple[str, ...]
+
+    @property
+    def ok(self) -> bool:
+        return not self.messages
+
+
 def trigger_prediction_workflow(
     settings: AppSettings,
     *,
@@ -126,6 +138,23 @@ def read_prediction_outputs(output_dir: Path | str) -> tuple[PredictionOutputIma
         )
 
     return tuple(images)
+
+
+def read_prediction_outputs_safely(output_dir: Path | str) -> PredictionOutputReadResult:
+    """Read prediction outputs and return messages instead of raising for UI use."""
+
+    try:
+        images = read_prediction_outputs(output_dir)
+    except (FileNotFoundError, OSError, ValueError) as error:
+        return PredictionOutputReadResult(images=(), messages=(str(error),))
+
+    if not images:
+        return PredictionOutputReadResult(
+            images=(),
+            messages=(f"No prediction images were found in: {Path(output_dir)}",),
+        )
+
+    return PredictionOutputReadResult(images=images, messages=())
 
 
 def queue_comfyui_prompt(

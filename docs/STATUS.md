@@ -92,6 +92,7 @@ Supported prediction output image formats are `png`, `jpg`, `jpeg`, and `webp`.
 It does not wait for generation completion yet.
 The minimal UI can now load prediction outputs from `project_output/predictions` and show them in a simple prediction output area.
 Images that Tkinter can preview are shown as small thumbnails; unsupported preview formats still appear by file name.
+Missing, empty, or invalid prediction output folders are now handled with simple status messages instead of crashing the UI.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
@@ -99,7 +100,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No live ComfyUI connection check, generation completion waiting, candidate selection UI, or mask editing UI exists yet.
+No live ComfyUI connection check, generation completion waiting, candidate selection UI, selected-candidate saving, or mask editing UI exists yet.
 
 ---
 
@@ -132,15 +133,15 @@ No live ComfyUI connection check, generation completion waiting, candidate selec
 
 ## Last Completed Task
 
-Phase 3.4:
-Added minimal prediction thumbnail display in the UI.
+Phase 3.5:
+Added minimal graceful handling for missing or failed prediction outputs.
 
 ---
 
 ## Current Next Task
 
-Phase 3.5:
-Handle missing or failed generation outputs gracefully.
+Phase 4.1:
+Add prediction candidate selection UI.
 
 ---
 

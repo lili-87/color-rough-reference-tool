@@ -24,7 +24,8 @@ from color_rough_ref_tool.core.settings import (
 )
 from color_rough_ref_tool.integrations.comfyui.prediction import (
     PredictionOutputImage,
-    read_prediction_outputs,
+    PredictionOutputReadResult,
+    read_prediction_outputs_safely,
 )
 
 
@@ -72,6 +73,14 @@ def format_prediction_output_count(outputs: tuple[PredictionOutputImage, ...]) -
     if len(outputs) == 1:
         return "Loaded 1 prediction image."
     return f"Loaded {len(outputs)} prediction images."
+
+
+def format_prediction_output_result(result: PredictionOutputReadResult) -> str:
+    """Return a short status message for prediction output loading."""
+
+    if result.ok:
+        return format_prediction_output_count(result.images)
+    return " ".join(result.messages)
 
 
 class ColorRoughReferenceApp:
@@ -279,13 +288,16 @@ class ColorRoughReferenceApp:
         try:
             settings = self._settings_from_form()
             prepare_project_output(settings.default_output_dir)
-            outputs = read_prediction_outputs(prediction_output_folder(settings))
-        except (FileNotFoundError, ValueError) as error:
+            result = read_prediction_outputs_safely(prediction_output_folder(settings))
+        except ValueError as error:
             messagebox.showerror("Prediction outputs", str(error))
             return
 
-        self._render_prediction_outputs(outputs)
-        self.status_message.set(format_prediction_output_count(outputs))
+        self._render_prediction_outputs(result.images)
+        status = format_prediction_output_result(result)
+        self.status_message.set(status)
+        if not result.ok:
+            messagebox.showinfo("Prediction outputs", status)
 
     def _render_prediction_outputs(self, outputs: tuple[PredictionOutputImage, ...]) -> None:
         for child in self.prediction_grid.winfo_children():
