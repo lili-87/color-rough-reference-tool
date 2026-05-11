@@ -83,13 +83,17 @@ workflows/hand_inpainting_workflow.json
 These are placeholders for user-provided ComfyUI workflow JSON files.
 They do not include ComfyUI, models, checkpoints, paid APIs, or cloud execution.
 
+Minimal prediction workflow triggering now exists in `src/color_rough_ref_tool/integrations/comfyui/prediction.py`.
+It can load the configured prediction workflow JSON and send it to an external ComfyUI `/prompt` endpoint.
+It does not modify the workflow with the selected color rough yet, and it does not wait for or read generated image outputs yet.
+
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
 The same module can now build minimal preview metadata for the selected input image, including file name, absolute path, file URI, and file size.
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No live ComfyUI connection check, ComfyUI execution code, prediction thumbnail UI, or mask editing UI exists yet.
+No live ComfyUI connection check, input-image workflow injection, prediction output reading, prediction thumbnail UI, or mask editing UI exists yet.
 
 ---
 
@@ -122,15 +126,15 @@ No live ComfyUI connection check, ComfyUI execution code, prediction thumbnail U
 
 ## Last Completed Task
 
-Phase 2.6:
-Added a minimal app entry point and basic settings/input UI shell.
+Phase 3.1:
+Added a minimal function to trigger the configured prediction workflow in external ComfyUI.
 
 ---
 
 ## Current Next Task
 
-Phase 3.1:
-Add function to trigger prediction workflow.
+Phase 3.2:
+Pass input color rough to prediction workflow.
 
 ---
 

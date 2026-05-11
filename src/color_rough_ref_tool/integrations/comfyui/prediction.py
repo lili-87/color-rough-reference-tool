@@ -1,0 +1,107 @@
+"""Minimal prediction workflow trigger for external ComfyUI."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+import json
+from pathlib import Path
+from typing import Any, Callable
+from urllib.error import URLError
+from urllib.request import Request, urlopen
+
+from color_rough_ref_tool.core.settings import AppSettings, normalize_comfyui_endpoint
+
+
+PROMPT_ENDPOINT_PATH = "/prompt"
+
+
+@dataclass(frozen=True, slots=True)
+class ComfyUIPromptResult:
+    """Result returned after ComfyUI accepts a queued prompt."""
+
+    prompt_id: str
+    response: dict[str, Any]
+
+
+def trigger_prediction_workflow(
+    settings: AppSettings,
+    *,
+    client_id: str | None = None,
+    timeout_seconds: float = 30,
+    opener: Callable[..., Any] = urlopen,
+) -> ComfyUIPromptResult:
+    """Load the configured prediction workflow and queue it in external ComfyUI."""
+
+    workflow = load_prediction_workflow(settings.prediction_workflow_path)
+    return queue_comfyui_prompt(
+        endpoint=settings.comfyui_endpoint,
+        workflow=workflow,
+        client_id=client_id,
+        timeout_seconds=timeout_seconds,
+        opener=opener,
+    )
+
+
+def load_prediction_workflow(workflow_path: Path | str) -> dict[str, Any]:
+    """Load a user-provided ComfyUI prediction workflow JSON file."""
+
+    path = Path(workflow_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Prediction workflow file does not exist: {path}")
+    if not path.is_file():
+        raise ValueError(f"Prediction workflow path must be a file: {path}")
+
+    try:
+        workflow = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise ValueError(f"Prediction workflow file is not valid JSON: {path}") from error
+
+    if not isinstance(workflow, dict):
+        raise ValueError(f"Prediction workflow file must contain a JSON object: {path}")
+    if workflow.get("placeholder") is True:
+        raise ValueError(f"Prediction workflow placeholder must be replaced: {path}")
+
+    return workflow
+
+
+def queue_comfyui_prompt(
+    *,
+    endpoint: str,
+    workflow: dict[str, Any],
+    client_id: str | None = None,
+    timeout_seconds: float = 30,
+    opener: Callable[..., Any] = urlopen,
+) -> ComfyUIPromptResult:
+    """Send a workflow prompt to ComfyUI's /prompt endpoint."""
+
+    payload: dict[str, Any] = {"prompt": workflow}
+    if client_id is not None:
+        payload["client_id"] = client_id
+
+    request = Request(
+        _prompt_url(endpoint),
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with opener(request, timeout=timeout_seconds) as response:
+            response_data = json.loads(response.read().decode("utf-8"))
+    except URLError as error:
+        raise ConnectionError(f"Could not reach ComfyUI endpoint: {endpoint}") from error
+    except json.JSONDecodeError as error:
+        raise ValueError("ComfyUI returned a response that was not valid JSON.") from error
+
+    if not isinstance(response_data, dict):
+        raise ValueError("ComfyUI response must be a JSON object.")
+
+    prompt_id = response_data.get("prompt_id")
+    if not isinstance(prompt_id, str) or not prompt_id:
+        raise ValueError("ComfyUI response did not include a prompt_id.")
+
+    return ComfyUIPromptResult(prompt_id=prompt_id, response=response_data)
+
+
+def _prompt_url(endpoint: str) -> str:
+    return f"{normalize_comfyui_endpoint(endpoint)}{PROMPT_ENDPOINT_PATH}"
