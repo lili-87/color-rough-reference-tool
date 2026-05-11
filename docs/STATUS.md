@@ -63,7 +63,10 @@ Basic settings storage now exists in `src/color_rough_ref_tool/core/settings.py`
 It can load default settings when no settings file exists and save user settings as JSON.
 The default local settings path is `settings/settings.json`, which is ignored by Git.
 
-No app entry point, output folder creation, UI implementation, image-loading code, or ComfyUI execution code exists yet.
+Project output folder creation now exists in `src/color_rough_ref_tool/core/project_output.py`.
+It creates the standard `project_output` subfolders: `input`, `predictions`, `selected`, `masks`, `hand_refs`, `sheets`, and `metadata`.
+
+No app entry point, UI implementation, image-loading code, ComfyUI execution code, or workflow placeholder handling exists yet.
 
 ---
 
@@ -96,15 +99,15 @@ No app entry point, output folder creation, UI implementation, image-loading cod
 
 ## Last Completed Task
 
-Phase 0.3:
-Added basic JSON settings storage.
+Phase 0.4:
+Added project output folder creation logic.
 
 ---
 
 ## Current Next Task
 
-Phase 0.4:
-Add output folder creation logic.
+Phase 0.5:
+Add workflow file placeholder handling.
 
 ---
 
