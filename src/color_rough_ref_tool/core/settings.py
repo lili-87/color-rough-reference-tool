@@ -16,8 +16,8 @@ class AppSettings:
     """User-editable settings for local generation workflows."""
 
     comfyui_endpoint: str = "http://127.0.0.1:8188"
-    prediction_workflow_path: str = ""
-    hand_inpainting_workflow_path: str = ""
+    prediction_workflow_path: str = "workflows/prediction_workflow.json"
+    hand_inpainting_workflow_path: str = "workflows/hand_inpainting_workflow.json"
     default_output_dir: str = "project_output"
 
 

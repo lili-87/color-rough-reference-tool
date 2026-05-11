@@ -66,7 +66,18 @@ The default local settings path is `settings/settings.json`, which is ignored by
 Project output folder creation now exists in `src/color_rough_ref_tool/core/project_output.py`.
 It creates the standard `project_output` subfolders: `input`, `predictions`, `selected`, `masks`, `hand_refs`, `sheets`, and `metadata`.
 
-No app entry point, UI implementation, image-loading code, ComfyUI execution code, or workflow placeholder handling exists yet.
+Workflow placeholder handling now exists in `src/color_rough_ref_tool/integrations/comfyui/workflow_placeholders.py`.
+The default workflow file locations are:
+
+```text
+workflows/prediction_workflow.json
+workflows/hand_inpainting_workflow.json
+```
+
+These are placeholders for user-provided ComfyUI workflow JSON files.
+They do not include ComfyUI, models, checkpoints, paid APIs, or cloud execution.
+
+No app entry point, UI implementation, image-loading code, or ComfyUI execution code exists yet.
 
 ---
 
@@ -99,15 +110,15 @@ No app entry point, UI implementation, image-loading code, ComfyUI execution cod
 
 ## Last Completed Task
 
-Phase 0.4:
-Added project output folder creation logic.
+Phase 0.5:
+Added ComfyUI workflow placeholder handling.
 
 ---
 
 ## Current Next Task
 
-Phase 0.5:
-Add workflow file placeholder handling.
+Phase 1.1:
+Add color rough image selection.
 
 ---
 

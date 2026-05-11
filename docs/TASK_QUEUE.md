@@ -8,7 +8,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 - [x] Phase 0.2: Create or confirm project folder structure for the standalone app.
 - [x] Phase 0.3: Add basic settings storage.
 - [x] Phase 0.4: Add output folder creation logic.
-- [ ] Phase 0.5: Add workflow file placeholder handling.
+- [x] Phase 0.5: Add workflow file placeholder handling.
 
 ## Phase 1: Color Rough Input
 

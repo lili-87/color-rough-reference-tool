@@ -37,7 +37,7 @@ sheets/
 metadata/
 
 # ComfyUI / model related
-ComfyUI/
+/ComfyUI/
 models/
 checkpoints/
 loras/
