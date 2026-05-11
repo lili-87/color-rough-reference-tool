@@ -42,6 +42,9 @@ MASK_PREVIEW_MAX_SIZE = 320
 DEFAULT_MASK_BRUSH_SIZE = 18
 MIN_MASK_BRUSH_SIZE = 1
 MAX_MASK_BRUSH_SIZE = 80
+MASK_TOOL_BRUSH = "brush"
+MASK_TOOL_RECTANGLE = "rectangle"
+MASK_TOOLS = frozenset({MASK_TOOL_BRUSH, MASK_TOOL_RECTANGLE})
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,6 +125,14 @@ def normalize_mask_brush_size(value: int | str) -> int:
     return max(MIN_MASK_BRUSH_SIZE, min(MAX_MASK_BRUSH_SIZE, brush_size))
 
 
+def normalize_mask_tool(value: str) -> str:
+    """Return a supported mask drawing tool name."""
+
+    if value in MASK_TOOLS:
+        return value
+    return MASK_TOOL_BRUSH
+
+
 class ColorRoughReferenceApp:
     """Small desktop shell for the first manual workflow steps."""
 
@@ -135,12 +146,15 @@ class ColorRoughReferenceApp:
         self.mask_preview_image: tk.PhotoImage | None = None
         self.mask_canvas: tk.Canvas | None = None
         self.last_mask_point: tuple[int, int] | None = None
+        self.rectangle_start_point: tuple[int, int] | None = None
+        self.active_rectangle_id: int | None = None
 
         self.endpoint_var = tk.StringVar(value=self.settings.comfyui_endpoint)
         self.prediction_workflow_var = tk.StringVar(value=self.settings.prediction_workflow_path)
         self.hand_workflow_var = tk.StringVar(value=self.settings.hand_inpainting_workflow_path)
         self.output_dir_var = tk.StringVar(value=self.settings.default_output_dir)
         self.mask_brush_size_var = tk.IntVar(value=DEFAULT_MASK_BRUSH_SIZE)
+        self.mask_tool_var = tk.StringVar(value=MASK_TOOL_BRUSH)
 
         self.root.title(WINDOW_TITLE)
         self.root.minsize(760, 560)
@@ -227,21 +241,33 @@ class ColorRoughReferenceApp:
             text="Load selected for mask",
             command=self.load_selected_for_mask,
         ).grid(row=0, column=0, sticky="w", padx=(0, 8))
-        ttk.Label(mask_frame, text="Brush").grid(row=0, column=1, sticky="w")
+        ttk.Radiobutton(
+            mask_frame,
+            text="Brush",
+            variable=self.mask_tool_var,
+            value=MASK_TOOL_BRUSH,
+        ).grid(row=0, column=1, sticky="w")
+        ttk.Radiobutton(
+            mask_frame,
+            text="Rectangle",
+            variable=self.mask_tool_var,
+            value=MASK_TOOL_RECTANGLE,
+        ).grid(row=0, column=2, sticky="w", padx=(4, 8))
+        ttk.Label(mask_frame, text="Size").grid(row=0, column=3, sticky="w")
         ttk.Spinbox(
             mask_frame,
             from_=MIN_MASK_BRUSH_SIZE,
             to=MAX_MASK_BRUSH_SIZE,
             textvariable=self.mask_brush_size_var,
             width=5,
-        ).grid(row=0, column=2, sticky="w", padx=(4, 8))
+        ).grid(row=0, column=4, sticky="w", padx=(4, 8))
         ttk.Button(
             mask_frame,
             text="Clear mask",
             command=self.clear_mask_drawing,
-        ).grid(row=0, column=3, sticky="w")
+        ).grid(row=0, column=5, sticky="w")
         self.mask_preview_frame = ttk.Frame(mask_frame, padding=(0, 8, 0, 0))
-        self.mask_preview_frame.grid(row=1, column=0, columnspan=4, sticky="nw")
+        self.mask_preview_frame.grid(row=1, column=0, columnspan=6, sticky="nw")
         ttk.Label(
             self.mask_preview_frame,
             text="No selected candidate loaded for mask editing",
@@ -473,6 +499,8 @@ class ColorRoughReferenceApp:
         self.mask_preview_image = self._load_image_preview(selected_path, MASK_PREVIEW_MAX_SIZE)
         self.mask_canvas = None
         self.last_mask_point = None
+        self.rectangle_start_point = None
+        self.active_rectangle_id = None
 
         if self.mask_preview_image is None:
             ttk.Label(
@@ -504,10 +532,18 @@ class ColorRoughReferenceApp:
         )
 
     def start_mask_stroke(self, event: tk.Event) -> None:
+        if normalize_mask_tool(self.mask_tool_var.get()) == MASK_TOOL_RECTANGLE:
+            self.start_rectangle_mask(event)
+            return
+
         self.last_mask_point = (int(event.x), int(event.y))
         self._draw_mask_dot(int(event.x), int(event.y))
 
     def draw_mask_stroke(self, event: tk.Event) -> None:
+        if normalize_mask_tool(self.mask_tool_var.get()) == MASK_TOOL_RECTANGLE:
+            self.update_rectangle_mask(event)
+            return
+
         if self.mask_canvas is None:
             return
 
@@ -530,7 +566,47 @@ class ColorRoughReferenceApp:
         self.last_mask_point = current_point
 
     def end_mask_stroke(self, event: tk.Event) -> None:
+        if normalize_mask_tool(self.mask_tool_var.get()) == MASK_TOOL_RECTANGLE:
+            self.finish_rectangle_mask(event)
+            return
+
         self.last_mask_point = None
+
+    def start_rectangle_mask(self, event: tk.Event) -> None:
+        if self.mask_canvas is None:
+            return
+
+        self.rectangle_start_point = (int(event.x), int(event.y))
+        self.active_rectangle_id = self.mask_canvas.create_rectangle(
+            event.x,
+            event.y,
+            event.x,
+            event.y,
+            outline="#ff3333",
+            width=2,
+            tags=("mask_stroke",),
+        )
+
+    def update_rectangle_mask(self, event: tk.Event) -> None:
+        if (
+            self.mask_canvas is None
+            or self.rectangle_start_point is None
+            or self.active_rectangle_id is None
+        ):
+            return
+
+        self.mask_canvas.coords(
+            self.active_rectangle_id,
+            self.rectangle_start_point[0],
+            self.rectangle_start_point[1],
+            int(event.x),
+            int(event.y),
+        )
+
+    def finish_rectangle_mask(self, event: tk.Event) -> None:
+        self.update_rectangle_mask(event)
+        self.rectangle_start_point = None
+        self.active_rectangle_id = None
 
     def clear_mask_drawing(self) -> None:
         if self.mask_canvas is None:
@@ -538,6 +614,9 @@ class ColorRoughReferenceApp:
             return
 
         self.mask_canvas.delete("mask_stroke")
+        self.rectangle_start_point = None
+        self.active_rectangle_id = None
+        self.last_mask_point = None
         self.status_message.set("Cleared mask drawing.")
 
     def _draw_mask_dot(self, x: int, y: int) -> None:

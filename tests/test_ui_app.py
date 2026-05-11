@@ -18,6 +18,7 @@ from color_rough_ref_tool.ui.app import (
     format_saved_prediction_message,
     format_selected_prediction_message,
     normalize_mask_brush_size,
+    normalize_mask_tool,
     prediction_output_folder,
 )
 
@@ -128,6 +129,11 @@ class UiAppTest(unittest.TestCase):
         self.assertEqual(normalize_mask_brush_size(18), 18)
         self.assertEqual(normalize_mask_brush_size(999), 80)
         self.assertEqual(normalize_mask_brush_size("not a number"), 18)
+
+    def test_normalize_mask_tool_accepts_supported_tools(self) -> None:
+        self.assertEqual(normalize_mask_tool("brush"), "brush")
+        self.assertEqual(normalize_mask_tool("rectangle"), "rectangle")
+        self.assertEqual(normalize_mask_tool("unknown"), "brush")
 
 
 if __name__ == "__main__":
