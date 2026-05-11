@@ -77,7 +77,10 @@ workflows/hand_inpainting_workflow.json
 These are placeholders for user-provided ComfyUI workflow JSON files.
 They do not include ComfyUI, models, checkpoints, paid APIs, or cloud execution.
 
-No app entry point, UI implementation, image-loading code, or ComfyUI execution code exists yet.
+Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
+It records a user-selected existing file path as the current color rough.
+
+No app entry point, UI implementation, image preview, input image copy/save, supported image format validation, or ComfyUI execution code exists yet.
 
 ---
 
@@ -110,15 +113,15 @@ No app entry point, UI implementation, image-loading code, or ComfyUI execution 
 
 ## Last Completed Task
 
-Phase 0.5:
-Added ComfyUI workflow placeholder handling.
+Phase 1.1:
+Added minimal color rough image selection handling.
 
 ---
 
 ## Current Next Task
 
-Phase 1.1:
-Add color rough image selection.
+Phase 1.2:
+Add input preview.
 
 ---
 
