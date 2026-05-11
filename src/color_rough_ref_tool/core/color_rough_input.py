@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import shutil
+
+from color_rough_ref_tool.core.project_output import ProjectOutputFolders
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,6 +28,14 @@ class ColorRoughPreview:
     file_name: str
     file_uri: str
     file_size_bytes: int
+
+
+@dataclass(frozen=True, slots=True)
+class SavedColorRoughInput:
+    """Location of the color rough copied into the project output."""
+
+    source_path: Path
+    saved_path: Path
 
 
 def select_color_rough_image(path: Path | str) -> ColorRoughSelection:
@@ -50,4 +61,20 @@ def build_color_rough_preview(
         file_name=absolute_path.name,
         file_uri=absolute_path.as_uri(),
         file_size_bytes=absolute_path.stat().st_size,
+    )
+
+
+def save_color_rough_to_project_input(
+    selection: ColorRoughSelection,
+    output_folders: ProjectOutputFolders,
+) -> SavedColorRoughInput:
+    """Copy the selected color rough into the project input folder."""
+
+    source_path = selection.path
+    saved_path = output_folders.input / f"color_rough{source_path.suffix.lower()}"
+    output_folders.input.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source_path, saved_path)
+    return SavedColorRoughInput(
+        source_path=source_path,
+        saved_path=saved_path,
     )

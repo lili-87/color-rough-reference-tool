@@ -4,8 +4,10 @@ import unittest
 
 from color_rough_ref_tool.core.color_rough_input import (
     build_color_rough_preview,
+    save_color_rough_to_project_input,
     select_color_rough_image,
 )
+from color_rough_ref_tool.core.project_output import prepare_project_output
 
 
 TEST_TEMP_DIR = Path("tmp") / "tests"
@@ -47,6 +49,22 @@ class ColorRoughInputTest(unittest.TestCase):
             self.assertEqual(preview.file_name, "rough.png")
             self.assertTrue(preview.file_uri.startswith("file:///"))
             self.assertEqual(preview.file_size_bytes, len(image_bytes))
+
+    def test_save_color_rough_to_project_input_copies_selected_file(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            workspace = Path(temp_dir)
+            image_path = workspace / "rough.PNG"
+            image_bytes = b"placeholder image bytes"
+            image_path.write_bytes(image_bytes)
+            selection = select_color_rough_image(image_path)
+            output_folders = prepare_project_output(workspace / "project_output")
+
+            saved = save_color_rough_to_project_input(selection, output_folders)
+
+            self.assertEqual(saved.source_path, image_path)
+            self.assertEqual(saved.saved_path, output_folders.input / "color_rough.png")
+            self.assertEqual(saved.saved_path.read_bytes(), image_bytes)
 
 
 if __name__ == "__main__":

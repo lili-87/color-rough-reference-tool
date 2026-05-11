@@ -80,8 +80,9 @@ They do not include ComfyUI, models, checkpoints, paid APIs, or cloud execution.
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
 The same module can now build minimal preview metadata for the selected input image, including file name, absolute path, file URI, and file size.
+It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 
-No app entry point, UI implementation, input image copy/save, supported image format validation, or ComfyUI execution code exists yet.
+No app entry point, UI implementation, supported image format validation, or ComfyUI execution code exists yet.
 
 ---
 
@@ -114,15 +115,15 @@ No app entry point, UI implementation, input image copy/save, supported image fo
 
 ## Last Completed Task
 
-Phase 1.2:
-Added minimal input preview metadata handling.
+Phase 1.3:
+Added selected color rough copy/save into project output input folder.
 
 ---
 
 ## Current Next Task
 
-Phase 1.3:
-Add input image copy/save into project output.
+Phase 1.4:
+Validate supported image formats.
 
 ---
 
