@@ -5,6 +5,9 @@ import unittest
 
 from color_rough_ref_tool.core.settings import AppSettings
 from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
+    HAND_MASK_IMAGE_PATH_PLACEHOLDER,
+    SELECTED_CANDIDATE_IMAGE_PATH_PLACEHOLDER,
+    inject_hand_inpainting_paths,
     load_hand_inpainting_workflow,
     trigger_hand_inpainting_workflow,
 )
@@ -75,6 +78,115 @@ class ComfyUIHandInpaintingTest(unittest.TestCase):
         self.assertEqual(captured["url"], "http://localhost:8188/prompt")
         self.assertEqual(captured["body"]["client_id"], "roughref-hand-test")
         self.assertEqual(captured["body"]["prompt"]["20"]["class_type"], "KSampler")
+
+    def test_inject_hand_inpainting_paths_replaces_nested_placeholders(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            temp_path = Path(temp_dir)
+            selected_path = temp_path / "selected" / "pred_002.png"
+            mask_path = temp_path / "masks" / "pred_002_hand_mask.png"
+            selected_path.parent.mkdir()
+            mask_path.parent.mkdir()
+            selected_path.write_bytes(b"selected image bytes")
+            mask_path.write_bytes(b"mask bytes")
+            workflow = {
+                "30": {
+                    "inputs": {
+                        "image": SELECTED_CANDIDATE_IMAGE_PATH_PLACEHOLDER,
+                        "mask": HAND_MASK_IMAGE_PATH_PLACEHOLDER,
+                        "notes": [
+                            f"selected={SELECTED_CANDIDATE_IMAGE_PATH_PLACEHOLDER}",
+                            f"mask={HAND_MASK_IMAGE_PATH_PLACEHOLDER}",
+                        ],
+                    }
+                }
+            }
+
+            injected = inject_hand_inpainting_paths(
+                workflow,
+                selected_candidate_path=selected_path,
+                mask_path=mask_path,
+            )
+
+        expected_selected = selected_path.resolve().as_posix()
+        expected_mask = mask_path.resolve().as_posix()
+        self.assertEqual(injected["30"]["inputs"]["image"], expected_selected)
+        self.assertEqual(injected["30"]["inputs"]["mask"], expected_mask)
+        self.assertEqual(injected["30"]["inputs"]["notes"][0], f"selected={expected_selected}")
+        self.assertEqual(injected["30"]["inputs"]["notes"][1], f"mask={expected_mask}")
+        self.assertEqual(
+            workflow["30"]["inputs"]["image"],
+            SELECTED_CANDIDATE_IMAGE_PATH_PLACEHOLDER,
+        )
+
+    def test_inject_hand_inpainting_paths_rejects_missing_selected_file(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            mask_path = Path(temp_dir) / "mask.png"
+            mask_path.write_bytes(b"mask bytes")
+
+            with self.assertRaises(FileNotFoundError):
+                inject_hand_inpainting_paths(
+                    {"30": {"inputs": {"image": SELECTED_CANDIDATE_IMAGE_PATH_PLACEHOLDER}}},
+                    selected_candidate_path=Path(temp_dir) / "missing.png",
+                    mask_path=mask_path,
+                )
+
+    def test_trigger_hand_inpainting_workflow_can_pass_selected_and_mask_paths(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            temp_path = Path(temp_dir)
+            workflow_path = temp_path / "hand_inpaint.json"
+            selected_path = temp_path / "selected.png"
+            mask_path = temp_path / "mask.png"
+            selected_path.write_bytes(b"selected image bytes")
+            mask_path.write_bytes(b"mask bytes")
+            workflow_path.write_text(
+                json.dumps(
+                    {
+                        "40": {
+                            "inputs": {
+                                "image": SELECTED_CANDIDATE_IMAGE_PATH_PLACEHOLDER,
+                                "mask": HAND_MASK_IMAGE_PATH_PLACEHOLDER,
+                            }
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            settings = AppSettings(
+                comfyui_endpoint="http://localhost:8188",
+                prediction_workflow_path="workflows/prediction.json",
+                hand_inpainting_workflow_path=workflow_path.as_posix(),
+                default_output_dir="project_output",
+            )
+            captured: dict[str, object] = {}
+
+            def opener(request: object, timeout: float) -> FakeResponse:
+                captured["body"] = json.loads(request.data.decode("utf-8"))
+                return FakeResponse({"prompt_id": "hand-002"})
+
+            result = trigger_hand_inpainting_workflow(
+                settings,
+                selected_candidate_path=selected_path,
+                mask_path=mask_path,
+                opener=opener,
+            )
+
+        prompt = captured["body"]["prompt"]
+        self.assertEqual(result.prompt_id, "hand-002")
+        self.assertEqual(prompt["40"]["inputs"]["image"], selected_path.resolve().as_posix())
+        self.assertEqual(prompt["40"]["inputs"]["mask"], mask_path.resolve().as_posix())
+
+    def test_trigger_hand_inpainting_workflow_requires_selected_and_mask_together(self) -> None:
+        settings = AppSettings(hand_inpainting_workflow_path="workflows/hand_inpaint.json")
+
+        with self.assertRaises(ValueError):
+            trigger_hand_inpainting_workflow(
+                settings,
+                selected_candidate_path="selected.png",
+                mask_path=None,
+            )
 
 
 if __name__ == "__main__":

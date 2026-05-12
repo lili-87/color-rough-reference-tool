@@ -14,16 +14,41 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
 )
 
 
+SELECTED_CANDIDATE_IMAGE_PATH_PLACEHOLDER = "{{SELECTED_CANDIDATE_IMAGE_PATH}}"
+SELECTED_CANDIDATE_IMAGE_PLACEHOLDER = "{{SELECTED_CANDIDATE_IMAGE}}"
+HAND_MASK_IMAGE_PATH_PLACEHOLDER = "{{HAND_MASK_IMAGE_PATH}}"
+HAND_MASK_IMAGE_PLACEHOLDER = "{{HAND_MASK_IMAGE}}"
+SELECTED_CANDIDATE_PLACEHOLDERS = (
+    SELECTED_CANDIDATE_IMAGE_PATH_PLACEHOLDER,
+    SELECTED_CANDIDATE_IMAGE_PLACEHOLDER,
+)
+HAND_MASK_PLACEHOLDERS = (
+    HAND_MASK_IMAGE_PATH_PLACEHOLDER,
+    HAND_MASK_IMAGE_PLACEHOLDER,
+)
+
+
 def trigger_hand_inpainting_workflow(
     settings: AppSettings,
     *,
+    selected_candidate_path: Path | str | None = None,
+    mask_path: Path | str | None = None,
     client_id: str | None = None,
     timeout_seconds: float = 30,
     opener: Callable[..., Any] = urlopen,
 ) -> ComfyUIPromptResult:
     """Load the configured hand inpainting workflow and queue it in external ComfyUI."""
 
+    if (selected_candidate_path is None) != (mask_path is None):
+        raise ValueError("Both selected candidate path and mask path are required.")
+
     workflow = load_hand_inpainting_workflow(settings.hand_inpainting_workflow_path)
+    if selected_candidate_path is not None and mask_path is not None:
+        workflow = inject_hand_inpainting_paths(
+            workflow,
+            selected_candidate_path=selected_candidate_path,
+            mask_path=mask_path,
+        )
     return queue_comfyui_prompt(
         endpoint=settings.comfyui_endpoint,
         workflow=workflow,
@@ -53,3 +78,58 @@ def load_hand_inpainting_workflow(workflow_path: Path | str) -> dict[str, Any]:
         raise ValueError(f"Hand inpainting workflow placeholder must be replaced: {path}")
 
     return workflow
+
+
+def inject_hand_inpainting_paths(
+    workflow: dict[str, Any],
+    *,
+    selected_candidate_path: Path | str,
+    mask_path: Path | str,
+) -> dict[str, Any]:
+    """Return a workflow with selected candidate and mask placeholders replaced."""
+
+    selected_path = _existing_file_path(
+        selected_candidate_path,
+        "Selected candidate image",
+    )
+    hand_mask_path = _existing_file_path(mask_path, "Hand mask image")
+
+    replacements = {
+        placeholder: selected_path
+        for placeholder in SELECTED_CANDIDATE_PLACEHOLDERS
+    }
+    replacements.update(
+        {
+            placeholder: hand_mask_path
+            for placeholder in HAND_MASK_PLACEHOLDERS
+        }
+    )
+    return _replace_placeholders(workflow, replacements)
+
+
+def _existing_file_path(path: Path | str, label: str) -> str:
+    file_path = Path(path)
+    if not file_path.exists():
+        raise FileNotFoundError(f"{label} does not exist: {file_path}")
+    if not file_path.is_file():
+        raise ValueError(f"{label} path must be a file: {file_path}")
+    return file_path.resolve().as_posix()
+
+
+def _replace_placeholders(value: Any, replacements: dict[str, str]) -> Any:
+    if isinstance(value, str):
+        replaced = value
+        for placeholder, replacement in replacements.items():
+            replaced = replaced.replace(placeholder, replacement)
+        return replaced
+    if isinstance(value, list):
+        return [
+            _replace_placeholders(item, replacements)
+            for item in value
+        ]
+    if isinstance(value, dict):
+        return {
+            key: _replace_placeholders(item, replacements)
+            for key, item in value.items()
+        }
+    return value

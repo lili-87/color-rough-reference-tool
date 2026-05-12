@@ -50,7 +50,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 ## Phase 6: Hand Reference Generation
 
 - [x] Phase 6.1: Add function to trigger hand inpainting workflow.
-- [ ] Phase 6.2: Pass selected candidate and mask to hand workflow.
+- [x] Phase 6.2: Pass selected candidate and mask to hand workflow.
 - [ ] Phase 6.3: Read hand reference outputs from output folder.
 - [ ] Phase 6.4: Show hand reference thumbnails in UI.
 - [ ] Phase 6.5: Handle failed hand generation gracefully.
