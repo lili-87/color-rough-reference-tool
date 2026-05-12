@@ -104,6 +104,8 @@ Minimal hand inpainting workflow triggering now exists in `src/color_rough_ref_t
 It can load the configured hand inpainting workflow JSON and send it to an external ComfyUI `/prompt` endpoint.
 It can now replace selected candidate and hand mask placeholders in the hand inpainting workflow before sending the prompt.
 The supported hand workflow placeholder strings are `{{SELECTED_CANDIDATE_IMAGE_PATH}}`, `{{SELECTED_CANDIDATE_IMAGE}}`, `{{HAND_MASK_IMAGE_PATH}}`, and `{{HAND_MASK_IMAGE}}`.
+It can now read generated hand reference image files from a hand reference output folder.
+Supported hand reference output image formats are `png`, `jpg`, `jpeg`, and `webp`.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
@@ -111,7 +113,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No live ComfyUI connection check, generation completion waiting, hand reference output reading, or hand reference UI exists yet.
+No live ComfyUI connection check, generation completion waiting, hand reference UI, or hand reference output error handling exists yet.
 
 ---
 
@@ -144,15 +146,15 @@ No live ComfyUI connection check, generation completion waiting, hand reference 
 
 ## Last Completed Task
 
-Phase 6.2:
-Added minimal selected candidate and mask path injection for hand inpainting workflows.
+Phase 6.3:
+Added minimal hand reference output image reading from an output folder.
 
 ---
 
 ## Current Next Task
 
-Phase 6.3:
-Read hand reference outputs from output folder.
+Phase 6.4:
+Show hand reference thumbnails in UI.
 
 ---
 

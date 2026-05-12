@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
 from pathlib import Path
 from typing import Any, Callable
@@ -14,6 +15,7 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
 )
 
 
+HAND_REFERENCE_IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".webp"})
 SELECTED_CANDIDATE_IMAGE_PATH_PLACEHOLDER = "{{SELECTED_CANDIDATE_IMAGE_PATH}}"
 SELECTED_CANDIDATE_IMAGE_PLACEHOLDER = "{{SELECTED_CANDIDATE_IMAGE}}"
 HAND_MASK_IMAGE_PATH_PLACEHOLDER = "{{HAND_MASK_IMAGE_PATH}}"
@@ -26,6 +28,16 @@ HAND_MASK_PLACEHOLDERS = (
     HAND_MASK_IMAGE_PATH_PLACEHOLDER,
     HAND_MASK_IMAGE_PLACEHOLDER,
 )
+
+
+@dataclass(frozen=True, slots=True)
+class HandReferenceOutputImage:
+    """A generated hand reference image found in an output folder."""
+
+    path: Path
+    file_name: str
+    file_size_bytes: int
+    modified_time: float
 
 
 def trigger_hand_inpainting_workflow(
@@ -78,6 +90,34 @@ def load_hand_inpainting_workflow(workflow_path: Path | str) -> dict[str, Any]:
         raise ValueError(f"Hand inpainting workflow placeholder must be replaced: {path}")
 
     return workflow
+
+
+def read_hand_reference_outputs(output_dir: Path | str) -> tuple[HandReferenceOutputImage, ...]:
+    """Read generated hand reference image files from an output folder."""
+
+    folder = Path(output_dir)
+    if not folder.exists():
+        raise FileNotFoundError(f"Hand reference output folder does not exist: {folder}")
+    if not folder.is_dir():
+        raise ValueError(f"Hand reference output path must be a folder: {folder}")
+
+    images: list[HandReferenceOutputImage] = []
+    for path in sorted(folder.iterdir(), key=lambda item: item.name.lower()):
+        if not path.is_file():
+            continue
+        if path.suffix.lower() not in HAND_REFERENCE_IMAGE_EXTENSIONS:
+            continue
+        stat = path.stat()
+        images.append(
+            HandReferenceOutputImage(
+                path=path,
+                file_name=path.name,
+                file_size_bytes=stat.st_size,
+                modified_time=stat.st_mtime,
+            )
+        )
+
+    return tuple(images)
 
 
 def inject_hand_inpainting_paths(

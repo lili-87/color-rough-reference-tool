@@ -9,6 +9,7 @@ from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
     SELECTED_CANDIDATE_IMAGE_PATH_PLACEHOLDER,
     inject_hand_inpainting_paths,
     load_hand_inpainting_workflow,
+    read_hand_reference_outputs,
     trigger_hand_inpainting_workflow,
 )
 
@@ -187,6 +188,39 @@ class ComfyUIHandInpaintingTest(unittest.TestCase):
                 selected_candidate_path="selected.png",
                 mask_path=None,
             )
+
+    def test_read_hand_reference_outputs_returns_supported_images_sorted_by_name(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            output_dir = Path(temp_dir) / "hand_refs"
+            output_dir.mkdir()
+            (output_dir / "pred_002_hand_ref_002.webp").write_bytes(b"webp bytes")
+            (output_dir / "notes.txt").write_text("not an image\n", encoding="utf-8")
+            (output_dir / "pred_002_hand_ref_001.PNG").write_bytes(b"png bytes")
+            (output_dir / "nested").mkdir()
+
+            outputs = read_hand_reference_outputs(output_dir)
+
+        self.assertEqual(
+            [output.file_name for output in outputs],
+            ["pred_002_hand_ref_001.PNG", "pred_002_hand_ref_002.webp"],
+        )
+        self.assertEqual(outputs[0].file_size_bytes, len(b"png bytes"))
+        self.assertGreater(outputs[0].modified_time, 0)
+
+    def test_read_hand_reference_outputs_returns_empty_tuple_for_empty_folder(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            output_dir = Path(temp_dir) / "hand_refs"
+            output_dir.mkdir()
+
+            outputs = read_hand_reference_outputs(output_dir)
+
+        self.assertEqual(outputs, ())
+
+    def test_read_hand_reference_outputs_rejects_missing_folder(self) -> None:
+        with self.assertRaises(FileNotFoundError):
+            read_hand_reference_outputs("missing_hand_refs")
 
 
 if __name__ == "__main__":
