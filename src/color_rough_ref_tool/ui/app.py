@@ -15,6 +15,7 @@ from color_rough_ref_tool.core.mask_image import (
     BrushMaskStroke,
     MaskOperation,
     RectangleMask,
+    mask_file_name_for_candidate,
     save_mask_png,
 )
 from color_rough_ref_tool.core.hand_reference_sheet import export_hand_reference_sheet
@@ -47,6 +48,7 @@ from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
     HandReferenceOutputImage,
     HandReferenceOutputReadResult,
     read_hand_reference_outputs_safely,
+    trigger_hand_inpainting_workflow,
 )
 
 
@@ -155,6 +157,12 @@ def format_hand_reference_output_result(result: HandReferenceOutputReadResult) -
     return " ".join(result.messages)
 
 
+def format_hand_reference_prompt_queued_message(result: ComfyUIPromptResult) -> str:
+    """Return a short status message after queuing a hand reference prompt."""
+
+    return f"Queued hand reference workflow: {result.prompt_id}"
+
+
 def format_exported_hand_reference_sheet_message(sheet_path: Path) -> str:
     """Return a short status message after exporting the hand reference sheet."""
 
@@ -201,6 +209,12 @@ def format_mask_candidate_message(metadata: SelectedCandidateMetadata) -> str:
     """Return a short status message for the mask editing preview candidate."""
 
     return f"Loaded selected candidate for mask editing: {metadata.file_name}"
+
+
+def hand_mask_path_for_candidate(masks_dir: Path | str, candidate_file_name: str) -> Path:
+    """Return the expected saved hand mask path for a selected candidate."""
+
+    return Path(masks_dir) / mask_file_name_for_candidate(candidate_file_name)
 
 
 def normalize_mask_brush_size(value: int | str) -> int:
@@ -386,9 +400,14 @@ class ColorRoughReferenceApp:
             hand_reference_frame,
             text="Export sheet",
             command=self.export_hand_reference_sheet,
-        ).grid(row=0, column=0, sticky="w", pady=(0, 8))
+        ).grid(row=0, column=0, sticky="w", padx=(0, 8), pady=(0, 8))
+        ttk.Button(
+            hand_reference_frame,
+            text="Regenerate hand ref",
+            command=self.regenerate_hand_reference,
+        ).grid(row=0, column=1, sticky="w", pady=(0, 8))
         self.hand_reference_grid = ttk.Frame(hand_reference_frame)
-        self.hand_reference_grid.grid(row=1, column=0, sticky="nw")
+        self.hand_reference_grid.grid(row=1, column=0, columnspan=2, sticky="nw")
         ttk.Label(
             self.hand_reference_grid,
             text="No hand reference images loaded",
@@ -675,6 +694,30 @@ class ColorRoughReferenceApp:
         message = format_exported_hand_reference_sheet_message(sheet_path)
         self.status_message.set(message)
         messagebox.showinfo("Hand reference sheet", f"Export complete:\n{sheet_path}")
+
+    def regenerate_hand_reference(self) -> None:
+        try:
+            settings = self._settings_from_form()
+            output_folders = prepare_project_output(settings.default_output_dir)
+            metadata = load_selected_candidate_metadata(output_folders.metadata)
+            selected_path = Path(metadata.saved_path)
+            mask_path = hand_mask_path_for_candidate(output_folders.masks, metadata.file_name)
+            result = trigger_hand_inpainting_workflow(
+                settings,
+                selected_candidate_path=selected_path,
+                mask_path=mask_path,
+                client_id="color-rough-ref-tool-ui",
+            )
+        except (ConnectionError, FileNotFoundError, OSError, ValueError) as error:
+            messagebox.showerror("Hand reference generation", str(error))
+            return
+
+        message = format_hand_reference_prompt_queued_message(result)
+        self.status_message.set(message)
+        messagebox.showinfo(
+            "Hand reference generation",
+            f"Hand reference workflow was queued.\n\nPrompt ID:\n{result.prompt_id}",
+        )
 
     def select_prediction(self, output: PredictionOutputImage) -> None:
         self.selected_prediction_path.set(output.path.as_posix())

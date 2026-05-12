@@ -20,6 +20,7 @@ from color_rough_ref_tool.ui.app import (
     format_exported_hand_reference_sheet_message,
     format_hand_reference_output_count,
     format_hand_reference_output_result,
+    format_hand_reference_prompt_queued_message,
     format_thumbnail_file_label,
     format_thumbnail_file_size,
     format_prediction_output_count,
@@ -28,6 +29,7 @@ from color_rough_ref_tool.ui.app import (
     format_mask_candidate_message,
     format_saved_prediction_message,
     format_selected_prediction_message,
+    hand_mask_path_for_candidate,
     hand_reference_output_folder,
     normalize_mask_brush_size,
     normalize_mask_tool,
@@ -164,12 +166,29 @@ class UiAppTest(unittest.TestCase):
             "No hand reference images were found in: project_output/hand_refs",
         )
 
+    def test_format_hand_reference_prompt_queued_message_reports_prompt_id(self) -> None:
+        result = ComfyUIPromptResult(
+            prompt_id="hand-001",
+            response={"prompt_id": "hand-001"},
+        )
+
+        self.assertEqual(
+            format_hand_reference_prompt_queued_message(result),
+            "Queued hand reference workflow: hand-001",
+        )
+
     def test_format_exported_hand_reference_sheet_message_reports_saved_path(self) -> None:
         self.assertEqual(
             format_exported_hand_reference_sheet_message(
                 Path("project_output/sheets/hand_sheet_001.png")
             ),
             "Exported hand reference sheet: project_output/sheets/hand_sheet_001.png",
+        )
+
+    def test_hand_mask_path_for_candidate_uses_saved_mask_name(self) -> None:
+        self.assertEqual(
+            hand_mask_path_for_candidate(Path("project_output/masks"), "pred_002.png"),
+            Path("project_output/masks/pred_002_hand_mask.png"),
         )
 
     def test_thumbnail_grid_position_uses_three_column_layout_by_default(self) -> None:
