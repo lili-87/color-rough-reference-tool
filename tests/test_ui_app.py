@@ -3,6 +3,7 @@ import unittest
 
 from color_rough_ref_tool.core.settings import AppSettings
 from color_rough_ref_tool.core.selection_metadata import SelectedCandidateMetadata
+from color_rough_ref_tool.integrations.comfyui.hand_inpainting import HandReferenceOutputImage
 from color_rough_ref_tool.integrations.comfyui.prediction import (
     PredictionOutputImage,
     PredictionOutputReadResult,
@@ -12,11 +13,13 @@ from color_rough_ref_tool.ui.app import (
     SettingsFormValues,
     build_settings_from_form,
     format_configuration_message,
+    format_hand_reference_output_count,
     format_prediction_output_count,
     format_prediction_output_result,
     format_mask_candidate_message,
     format_saved_prediction_message,
     format_selected_prediction_message,
+    hand_reference_output_folder,
     normalize_mask_brush_size,
     normalize_mask_tool,
     prediction_output_folder,
@@ -65,6 +68,13 @@ class UiAppTest(unittest.TestCase):
 
         self.assertEqual(folder.as_posix(), "custom_output/predictions")
 
+    def test_hand_reference_output_folder_uses_default_output_dir(self) -> None:
+        settings = AppSettings(default_output_dir="custom_output")
+
+        folder = hand_reference_output_folder(settings)
+
+        self.assertEqual(folder.as_posix(), "custom_output/hand_refs")
+
     def test_format_prediction_output_count_reports_count(self) -> None:
         output = PredictionOutputImage(
             path=Path("predictions/pred_001.png"),
@@ -110,6 +120,17 @@ class UiAppTest(unittest.TestCase):
             format_saved_prediction_message(saved),
             "Saved selected prediction: project_output/selected/pred_002.png",
         )
+
+    def test_format_hand_reference_output_count_reports_count(self) -> None:
+        output = HandReferenceOutputImage(
+            path=Path("hand_refs/pred_002_hand_ref_001.png"),
+            file_name="pred_002_hand_ref_001.png",
+            file_size_bytes=10,
+            modified_time=1.0,
+        )
+
+        self.assertEqual(format_hand_reference_output_count(()), "Loaded 0 hand reference images.")
+        self.assertEqual(format_hand_reference_output_count((output,)), "Loaded 1 hand reference image.")
 
     def test_format_mask_candidate_message_reports_file_name(self) -> None:
         metadata = SelectedCandidateMetadata(

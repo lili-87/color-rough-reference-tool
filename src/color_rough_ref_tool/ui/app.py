@@ -40,10 +40,15 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
     read_prediction_outputs_safely,
     save_selected_prediction_candidate,
 )
+from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
+    HandReferenceOutputImage,
+    read_hand_reference_outputs,
+)
 
 
 WINDOW_TITLE = "Color Rough Reference Tool"
 PREDICTION_THUMBNAIL_MAX_SIZE = 160
+HAND_REFERENCE_THUMBNAIL_MAX_SIZE = 160
 MASK_PREVIEW_MAX_SIZE = 320
 DEFAULT_MASK_BRUSH_SIZE = 18
 MIN_MASK_BRUSH_SIZE = 1
@@ -87,6 +92,12 @@ def prediction_output_folder(settings: AppSettings) -> Path:
     return Path(settings.default_output_dir) / "predictions"
 
 
+def hand_reference_output_folder(settings: AppSettings) -> Path:
+    """Return the folder where hand reference outputs are expected."""
+
+    return Path(settings.default_output_dir) / "hand_refs"
+
+
 def format_prediction_output_count(outputs: tuple[PredictionOutputImage, ...]) -> str:
     """Return a short UI status message for loaded prediction outputs."""
 
@@ -113,6 +124,14 @@ def format_saved_prediction_message(saved: SavedPredictionCandidate) -> str:
     """Return a short status message after saving the selected prediction."""
 
     return f"Saved selected prediction: {saved.saved_path.as_posix()}"
+
+
+def format_hand_reference_output_count(outputs: tuple[HandReferenceOutputImage, ...]) -> str:
+    """Return a short UI status message for loaded hand reference outputs."""
+
+    if len(outputs) == 1:
+        return "Loaded 1 hand reference image."
+    return f"Loaded {len(outputs)} hand reference images."
 
 
 def format_mask_candidate_message(metadata: SelectedCandidateMetadata) -> str:
@@ -149,6 +168,7 @@ class ColorRoughReferenceApp:
         self.status_message = tk.StringVar(value="Ready")
         self.selected_prediction_path = tk.StringVar(value="")
         self.prediction_thumbnails: list[tk.PhotoImage] = []
+        self.hand_reference_thumbnails: list[tk.PhotoImage] = []
         self.mask_preview_image: tk.PhotoImage | None = None
         self.mask_canvas: tk.Canvas | None = None
         self.last_mask_point: tuple[int, int] | None = None
@@ -167,6 +187,7 @@ class ColorRoughReferenceApp:
         self.root.title(WINDOW_TITLE)
         self.root.minsize(760, 560)
         self._build_layout()
+        self.load_hand_reference_outputs()
 
     def _build_layout(self) -> None:
         container = ttk.Frame(self.root, padding=16)
@@ -284,6 +305,16 @@ class ColorRoughReferenceApp:
         ttk.Label(
             self.mask_preview_frame,
             text="No selected candidate loaded for mask editing",
+        ).grid(row=0, column=0, sticky="w")
+
+        hand_reference_frame = ttk.LabelFrame(content_pane, text="Hand references", padding=8)
+        content_pane.add(hand_reference_frame, weight=1)
+        hand_reference_frame.columnconfigure(0, weight=1)
+        self.hand_reference_grid = ttk.Frame(hand_reference_frame)
+        self.hand_reference_grid.grid(row=0, column=0, sticky="nw")
+        ttk.Label(
+            self.hand_reference_grid,
+            text="No hand reference images loaded",
         ).grid(row=0, column=0, sticky="w")
 
         ttk.Label(container, textvariable=self.status_message).grid(
@@ -451,6 +482,48 @@ class ColorRoughReferenceApp:
                 value=output.path.as_posix(),
                 command=lambda candidate=output: self.select_prediction(candidate),
             ).grid(row=2, column=0, pady=(4, 0))
+
+    def load_hand_reference_outputs(self) -> None:
+        try:
+            settings = self._settings_from_form()
+            output_folders = prepare_project_output(settings.default_output_dir)
+            outputs = read_hand_reference_outputs(output_folders.hand_refs)
+        except (OSError, ValueError) as error:
+            self.status_message.set(str(error))
+            return
+
+        self._render_hand_reference_outputs(outputs)
+        self.status_message.set(format_hand_reference_output_count(outputs))
+
+    def _render_hand_reference_outputs(
+        self,
+        outputs: tuple[HandReferenceOutputImage, ...],
+    ) -> None:
+        for child in self.hand_reference_grid.winfo_children():
+            child.destroy()
+        self.hand_reference_thumbnails.clear()
+
+        if not outputs:
+            ttk.Label(
+                self.hand_reference_grid,
+                text="No hand reference images found",
+            ).grid(row=0, column=0, sticky="w")
+            return
+
+        for index, output in enumerate(outputs):
+            row = index // 4
+            column = index % 4
+            item_frame = ttk.Frame(self.hand_reference_grid, padding=6)
+            item_frame.grid(row=row, column=column, sticky="n", padx=4, pady=4)
+
+            image = self._load_hand_reference_thumbnail_image(output.path)
+            if image is None:
+                ttk.Label(item_frame, text="[preview unavailable]").grid(row=0, column=0)
+            else:
+                self.hand_reference_thumbnails.append(image)
+                ttk.Label(item_frame, image=image).grid(row=0, column=0)
+
+            ttk.Label(item_frame, text=output.file_name).grid(row=1, column=0, pady=(4, 0))
 
     def select_prediction(self, output: PredictionOutputImage) -> None:
         self.selected_prediction_path.set(output.path.as_posix())
@@ -703,6 +776,9 @@ class ColorRoughReferenceApp:
 
     def _load_thumbnail_image(self, path: Path) -> tk.PhotoImage | None:
         return self._load_image_preview(path, PREDICTION_THUMBNAIL_MAX_SIZE)
+
+    def _load_hand_reference_thumbnail_image(self, path: Path) -> tk.PhotoImage | None:
+        return self._load_image_preview(path, HAND_REFERENCE_THUMBNAIL_MAX_SIZE)
 
     def _load_image_preview(self, path: Path, max_size: int) -> tk.PhotoImage | None:
         try:
