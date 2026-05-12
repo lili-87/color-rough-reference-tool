@@ -95,6 +95,34 @@ def format_configuration_message(settings: AppSettings) -> str:
     return "Please fix these settings:\n" + "\n".join(f"- {error}" for error in result.errors)
 
 
+def format_error_message(action: str, error: Exception) -> str:
+    """Return a beginner-friendly error message for UI dialogs."""
+
+    detail = str(error)
+    detail_lower = detail.lower()
+    hints: list[str] = []
+
+    if "could not reach comfyui endpoint" in detail_lower:
+        hints.append("Start ComfyUI first, then check that the endpoint is correct.")
+    if "workflow" in detail_lower:
+        hints.append("Check the workflow file path. Placeholder files must be replaced with real ComfyUI workflow JSON files.")
+    if "selected_candidate.json" in detail_lower or "selected candidate" in detail_lower:
+        hints.append("Load prediction images, choose one candidate, then press Save selected.")
+    if "hand mask" in detail_lower or "_hand_mask" in detail_lower:
+        hints.append("Load the selected candidate for mask editing, draw a mask, then press Save mask.")
+    if "no prediction images" in detail_lower:
+        hints.append("Put generated prediction images in project_output/predictions, then press Load predictions.")
+    if "no hand reference images" in detail_lower:
+        hints.append("Put generated hand reference images in project_output/hand_refs, then reload or export again.")
+    if "does not exist" in detail_lower and not hints:
+        hints.append("The file or folder could not be found. Check the path and try again.")
+    if not hints:
+        hints.append("Check the current settings and required files, then try again.")
+
+    hint_text = "\n".join(f"- {hint}" for hint in hints)
+    return f"Could not {action}.\n\nWhat to check:\n{hint_text}\n\nDetails:\n{detail}"
+
+
 def prediction_output_folder(settings: AppSettings) -> Path:
     """Return the folder where prediction outputs are expected."""
 
@@ -474,7 +502,7 @@ class ColorRoughReferenceApp:
             selection = select_color_rough_image(path)
             preview = build_color_rough_preview(selection)
         except (FileNotFoundError, ValueError, OSError) as error:
-            messagebox.showerror("Color rough", str(error))
+            messagebox.showerror("Color rough", format_error_message("load the color rough image", error))
             return
 
         self.color_rough_path.set(f"{preview.file_name} ({preview.file_size_bytes} bytes)")
@@ -496,7 +524,7 @@ class ColorRoughReferenceApp:
         try:
             settings = self._settings_from_form()
         except ValueError as error:
-            messagebox.showerror("Settings", str(error))
+            messagebox.showerror("Settings", format_error_message("read the settings", error))
             return
 
         message = format_configuration_message(settings)
@@ -511,7 +539,7 @@ class ColorRoughReferenceApp:
             settings = self._settings_from_form()
             saved_path = save_settings(settings)
         except ValueError as error:
-            messagebox.showerror("Settings", str(error))
+            messagebox.showerror("Settings", format_error_message("save the settings", error))
             return
 
         self.settings = settings
@@ -524,7 +552,7 @@ class ColorRoughReferenceApp:
             output_folders = prepare_project_output(settings.default_output_dir)
             saved_path = save_settings_snapshot(settings, output_folders.metadata)
         except ValueError as error:
-            messagebox.showerror("Settings snapshot", str(error))
+            messagebox.showerror("Settings snapshot", format_error_message("save the settings snapshot", error))
             return
 
         self.status_message.set(f"Saved settings snapshot: {saved_path}")
@@ -546,7 +574,7 @@ class ColorRoughReferenceApp:
                 client_id="color-rough-ref-tool-ui",
             )
         except (ConnectionError, FileNotFoundError, OSError, ValueError) as error:
-            messagebox.showerror("Prediction generation", str(error))
+            messagebox.showerror("Prediction generation", format_error_message("queue prediction generation", error))
             return
 
         message = format_prediction_prompt_queued_message(result)
@@ -562,7 +590,7 @@ class ColorRoughReferenceApp:
             prepare_project_output(settings.default_output_dir)
             result = read_prediction_outputs_safely(prediction_output_folder(settings))
         except ValueError as error:
-            messagebox.showerror("Prediction outputs", str(error))
+            messagebox.showerror("Prediction outputs", format_error_message("load prediction outputs", error))
             return
 
         self._render_prediction_outputs(result.images)
@@ -626,7 +654,7 @@ class ColorRoughReferenceApp:
             output_folders = prepare_project_output(settings.default_output_dir)
             result = read_hand_reference_outputs_safely(output_folders.hand_refs)
         except ValueError as error:
-            self.status_message.set(str(error))
+            self.status_message.set(format_error_message("load hand reference outputs", error).replace("\n", " "))
             return
 
         self._render_hand_reference_outputs(result.images)
@@ -688,7 +716,7 @@ class ColorRoughReferenceApp:
                 return
             sheet_path = export_hand_reference_sheet(result.images, output_folders.sheets)
         except (OSError, ValueError) as error:
-            messagebox.showerror("Hand reference sheet", str(error))
+            messagebox.showerror("Hand reference sheet", format_error_message("export the hand reference sheet", error))
             return
 
         message = format_exported_hand_reference_sheet_message(sheet_path)
@@ -709,7 +737,7 @@ class ColorRoughReferenceApp:
                 client_id="color-rough-ref-tool-ui",
             )
         except (ConnectionError, FileNotFoundError, OSError, ValueError) as error:
-            messagebox.showerror("Hand reference generation", str(error))
+            messagebox.showerror("Hand reference generation", format_error_message("queue hand reference generation", error))
             return
 
         message = format_hand_reference_prompt_queued_message(result)
@@ -741,7 +769,7 @@ class ColorRoughReferenceApp:
                 output_folders.metadata,
             )
         except (FileNotFoundError, OSError, ValueError) as error:
-            messagebox.showerror("Selected prediction", str(error))
+            messagebox.showerror("Selected prediction", format_error_message("save the selected prediction", error))
             return
 
         message = format_saved_prediction_message(saved)
@@ -762,7 +790,7 @@ class ColorRoughReferenceApp:
             if not selected_path.is_file():
                 raise ValueError(f"Selected candidate path must be a file: {selected_path}")
         except (FileNotFoundError, OSError, ValueError) as error:
-            messagebox.showerror("Mask editing", str(error))
+            messagebox.showerror("Mask editing", format_error_message("load the selected candidate for mask editing", error))
             return
 
         self._render_mask_preview(selected_path, metadata)
@@ -962,7 +990,7 @@ class ColorRoughReferenceApp:
                 candidate_file_name=self.mask_candidate_metadata.file_name,
             )
         except (OSError, ValueError) as error:
-            messagebox.showerror("Mask editing", str(error))
+            messagebox.showerror("Mask editing", format_error_message("save the mask image", error))
             return
 
         self.status_message.set(f"Saved mask: {saved_path}")

@@ -110,6 +110,7 @@ The minimal UI can now load the saved selected candidate metadata and show the s
 The mask editing preview now has a minimal brush tool for drawing red mask strokes on the displayed selected candidate.
 The mask editing preview now also has a minimal rectangle tool for marking a rectangular mask area on the displayed selected candidate.
 The minimal UI can now save the drawn brush and rectangle mask as a black-and-white PNG in `project_output/masks`.
+UI error dialogs now add beginner-friendly hints before showing the original technical detail.
 Minimal hand inpainting workflow triggering now exists in `src/color_rough_ref_tool/integrations/comfyui/hand_inpainting.py`.
 It can load the configured hand inpainting workflow JSON and send it to an external ComfyUI `/prompt` endpoint.
 It can now replace selected candidate and hand mask placeholders in the hand inpainting workflow before sending the prompt.
@@ -162,14 +163,14 @@ No live ComfyUI connection check or generation completion waiting exists yet.
 ## Last Completed Task
 
 Phase 8:
-Added a minimal regenerate hand reference button that queues the existing hand inpainting workflow.
+Added clearer beginner-friendly error messages in the UI.
 
 ---
 
 ## Current Next Task
 
 Phase 8:
-Continue usability improvements, with clearer error messages still pending.
+Continue usability improvements, with simple project reopen support still pending.
 
 ---
 

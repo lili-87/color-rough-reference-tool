@@ -17,6 +17,7 @@ from color_rough_ref_tool.ui.app import (
     SettingsFormValues,
     build_settings_from_form,
     format_configuration_message,
+    format_error_message,
     format_exported_hand_reference_sheet_message,
     format_hand_reference_output_count,
     format_hand_reference_output_result,
@@ -72,6 +73,32 @@ class UiAppTest(unittest.TestCase):
         self.assertIn("Please fix these settings:", message)
         self.assertIn("ComfyUI endpoint:", message)
         self.assertIn("Prediction workflow file:", message)
+
+    def test_format_error_message_adds_comfyui_hint(self) -> None:
+        message = format_error_message(
+            "queue prediction generation",
+            ConnectionError("Could not reach ComfyUI endpoint: http://127.0.0.1:8188"),
+        )
+
+        self.assertIn("Could not queue prediction generation.", message)
+        self.assertIn("Start ComfyUI first", message)
+        self.assertIn("Details:", message)
+
+    def test_format_error_message_adds_selected_candidate_hint(self) -> None:
+        message = format_error_message(
+            "queue hand reference generation",
+            FileNotFoundError("Selected candidate metadata does not exist: selected_candidate.json"),
+        )
+
+        self.assertIn("Save selected", message)
+
+    def test_format_error_message_adds_mask_hint(self) -> None:
+        message = format_error_message(
+            "queue hand reference generation",
+            FileNotFoundError("Hand mask image does not exist: project_output/masks/pred_002_hand_mask.png"),
+        )
+
+        self.assertIn("Save mask", message)
 
     def test_prediction_output_folder_uses_default_output_dir(self) -> None:
         settings = AppSettings(default_output_dir="custom_output")
