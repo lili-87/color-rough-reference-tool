@@ -101,6 +101,7 @@ It does not wait for generation completion yet.
 The minimal UI can now load prediction outputs from `project_output/predictions` and show them in a simple prediction output area.
 Images that Tkinter can preview are shown as small thumbnails; unsupported preview formats still appear by file name.
 Thumbnail cards now use a slightly clearer three-column layout with compact file names and file size labels.
+The minimal UI can now queue the prediction workflow again from a selected color rough using the existing prediction trigger.
 Missing, empty, or invalid prediction output folders are now handled with simple status messages instead of crashing the UI.
 The minimal UI can now select one loaded prediction candidate with a radio button and show the selected file name in the status area.
 The minimal UI can now copy the selected prediction candidate into `project_output/selected` while keeping the original file name.
@@ -159,15 +160,15 @@ No live ComfyUI connection check or generation completion waiting exists yet.
 
 ## Last Completed Task
 
-Phase 8 first small task:
-Improved thumbnail layout readability with a clearer grid, compact labels, and file size display.
+Phase 8:
+Added a minimal regenerate prediction button that queues the existing prediction workflow.
 
 ---
 
 ## Current Next Task
 
 Phase 8:
-Continue usability improvements, with regenerate buttons still pending.
+Continue usability improvements, with regenerate hand reference still pending.
 
 ---
 

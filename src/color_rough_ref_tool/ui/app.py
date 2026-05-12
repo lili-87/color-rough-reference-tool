@@ -35,11 +35,13 @@ from color_rough_ref_tool.core.settings import (
     with_prediction_workflow_path,
 )
 from color_rough_ref_tool.integrations.comfyui.prediction import (
+    ComfyUIPromptResult,
     PredictionOutputImage,
     PredictionOutputReadResult,
     SavedPredictionCandidate,
     read_prediction_outputs_safely,
     save_selected_prediction_candidate,
+    trigger_prediction_workflow,
 )
 from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
     HandReferenceOutputImage,
@@ -117,6 +119,12 @@ def format_prediction_output_result(result: PredictionOutputReadResult) -> str:
     if result.ok:
         return format_prediction_output_count(result.images)
     return " ".join(result.messages)
+
+
+def format_prediction_prompt_queued_message(result: ComfyUIPromptResult) -> str:
+    """Return a short status message after queuing a prediction prompt."""
+
+    return f"Queued prediction workflow: {result.prompt_id}"
 
 
 def format_selected_prediction_message(output: PredictionOutputImage) -> str:
@@ -220,6 +228,7 @@ class ColorRoughReferenceApp:
         self.root = root
         self.settings = load_settings()
         self.color_rough_path = tk.StringVar(value="No color rough selected")
+        self.selected_color_rough_file_path = tk.StringVar(value="")
         self.status_message = tk.StringVar(value="Ready")
         self.selected_prediction_path = tk.StringVar(value="")
         self.prediction_thumbnails: list[tk.PhotoImage] = []
@@ -292,6 +301,14 @@ class ColorRoughReferenceApp:
             padx=(0, 8),
         )
         ttk.Button(button_bar, text="Save snapshot", command=self.save_snapshot).pack(
+            side="left",
+            padx=(0, 8),
+        )
+        ttk.Button(
+            button_bar,
+            text="Regenerate prediction",
+            command=self.regenerate_prediction,
+        ).pack(
             side="left",
             padx=(0, 8),
         )
@@ -442,6 +459,7 @@ class ColorRoughReferenceApp:
             return
 
         self.color_rough_path.set(f"{preview.file_name} ({preview.file_size_bytes} bytes)")
+        self.selected_color_rough_file_path.set(selection.path.as_posix())
         self.status_message.set(f"Selected: {preview.path}")
 
     def choose_workflow_file(self, variable: tk.StringVar) -> None:
@@ -492,6 +510,32 @@ class ColorRoughReferenceApp:
 
         self.status_message.set(f"Saved settings snapshot: {saved_path}")
         messagebox.showinfo("Settings snapshot", f"Saved settings snapshot:\n{saved_path}")
+
+    def regenerate_prediction(self) -> None:
+        color_rough_path = self.selected_color_rough_file_path.get()
+        if not color_rough_path:
+            message = "Choose a color rough image before regenerating predictions."
+            self.status_message.set(message)
+            messagebox.showinfo("Prediction generation", message)
+            return
+
+        try:
+            settings = self._settings_from_form()
+            result = trigger_prediction_workflow(
+                settings,
+                color_rough_path=color_rough_path,
+                client_id="color-rough-ref-tool-ui",
+            )
+        except (ConnectionError, FileNotFoundError, OSError, ValueError) as error:
+            messagebox.showerror("Prediction generation", str(error))
+            return
+
+        message = format_prediction_prompt_queued_message(result)
+        self.status_message.set(message)
+        messagebox.showinfo(
+            "Prediction generation",
+            f"Prediction workflow was queued.\n\nPrompt ID:\n{result.prompt_id}",
+        )
 
     def load_prediction_outputs(self) -> None:
         try:

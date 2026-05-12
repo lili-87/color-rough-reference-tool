@@ -8,6 +8,7 @@ from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
     HandReferenceOutputReadResult,
 )
 from color_rough_ref_tool.integrations.comfyui.prediction import (
+    ComfyUIPromptResult,
     PredictionOutputImage,
     PredictionOutputReadResult,
     SavedPredictionCandidate,
@@ -23,6 +24,7 @@ from color_rough_ref_tool.ui.app import (
     format_thumbnail_file_size,
     format_prediction_output_count,
     format_prediction_output_result,
+    format_prediction_prompt_queued_message,
     format_mask_candidate_message,
     format_saved_prediction_message,
     format_selected_prediction_message,
@@ -103,6 +105,17 @@ class UiAppTest(unittest.TestCase):
         self.assertEqual(
             format_prediction_output_result(result),
             "No prediction images were found in: project_output/predictions",
+        )
+
+    def test_format_prediction_prompt_queued_message_reports_prompt_id(self) -> None:
+        result = ComfyUIPromptResult(
+            prompt_id="prompt-001",
+            response={"prompt_id": "prompt-001"},
+        )
+
+        self.assertEqual(
+            format_prediction_prompt_queued_message(result),
+            "Queued prediction workflow: prompt-001",
         )
 
     def test_format_selected_prediction_message_reports_file_name(self) -> None:

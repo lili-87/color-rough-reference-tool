@@ -66,7 +66,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 ## Later / Optional
 
 - [x] Improve thumbnail layout.
-- [ ] Add regenerate prediction button.
+- [x] Add regenerate prediction button.
 - [ ] Add regenerate hand reference button.
 - [ ] Add clearer error messages.
 - [ ] Add simple project reopen support.
