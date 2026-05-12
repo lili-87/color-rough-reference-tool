@@ -152,7 +152,26 @@ These are intentionally left for later app-side tasks:
 - waiting for ComfyUI generation to finish
 - reading ComfyUI history automatically
 - copying ComfyUI output images automatically
+- verifying that the workflow graph actually uses the provided image inputs
 - advanced workflow editing
 - cloud GPU support
 - paid API support
 - bundled model installation
+
+---
+
+## 8. Current Next Development Order
+
+After the first successful queue test, continue in this order:
+
+```text
+1. Confirm the prediction workflow really uses the color rough image.
+2. Confirm the hand inpainting workflow really uses selected candidate + mask.
+3. Add ComfyUI history lookup for queued prompt IDs.
+4. Copy finished prediction images automatically into project_output/predictions/.
+5. Copy finished hand reference images automatically into project_output/hand_refs/.
+6. Refresh thumbnails automatically after copied outputs are available.
+7. Run one complete v0.1 test from color rough to exported hand sheet.
+```
+
+Do not add paid APIs, cloud GPU settings, bundled models, local reference search, or Blender / 3D work during this initial version.

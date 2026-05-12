@@ -75,3 +75,38 @@ Codex should work on the next unfinished task only unless the user says otherwis
 - [x] Add local workflow placeholder validation helper.
 - [x] Add workflow placeholder validation UI.
 - [x] Add local AI setup guide.
+- [x] Document post-AI setup implementation plan.
+
+## Phase 9: Real Local AI Workflow Check
+
+- [ ] Phase 9.1: Verify the prediction workflow actually uses the color rough image input.
+- [ ] Phase 9.2: Document the minimum recommended prediction workflow structure for img2img or ControlNet.
+- [ ] Phase 9.3: Verify the hand inpainting workflow actually uses both selected candidate and mask image.
+- [ ] Phase 9.4: Add beginner-friendly workflow mismatch messages if ComfyUI accepts a prompt but the workflow ignores the image input.
+
+## Phase 10: Generation Completion and Output Pickup
+
+- [ ] Phase 10.1: Store the latest prediction prompt ID after queueing.
+- [ ] Phase 10.2: Add a minimal ComfyUI history lookup function for a prompt ID.
+- [ ] Phase 10.3: Detect finished prediction outputs from ComfyUI history.
+- [ ] Phase 10.4: Copy finished prediction images into `project_output/predictions/`.
+- [ ] Phase 10.5: Refresh prediction thumbnails after copied outputs are available.
+- [ ] Phase 10.6: Store the latest hand reference prompt ID after queueing.
+- [ ] Phase 10.7: Detect finished hand reference outputs from ComfyUI history.
+- [ ] Phase 10.8: Copy finished hand reference images into `project_output/hand_refs/`.
+- [ ] Phase 10.9: Refresh hand reference thumbnails after copied outputs are available.
+
+## Phase 11: Beginner-Friendly Generation Flow
+
+- [ ] Phase 11.1: Add simple waiting/status messages for queued generation.
+- [ ] Phase 11.2: Add clearer message when ComfyUI is not running or unreachable.
+- [ ] Phase 11.3: Add clearer message when workflow placeholders are present but image input is not connected in the workflow.
+- [ ] Phase 11.4: Add guard message before hand reference generation if selected candidate or mask is missing.
+- [ ] Phase 11.5: Add a simple troubleshooting checklist to the local AI setup guide.
+
+## Phase 12: v0.1 Validation
+
+- [ ] Phase 12.1: Run one complete manual prediction test with external ComfyUI.
+- [ ] Phase 12.2: Run one complete manual hand reference test with external ComfyUI.
+- [ ] Phase 12.3: Confirm sheet export and metadata after a full workflow.
+- [ ] Phase 12.4: Update docs with final v0.1 known issues and usage steps.

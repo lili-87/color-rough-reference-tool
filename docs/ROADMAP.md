@@ -146,6 +146,80 @@ The workflow is smoother, while staying simple and focused.
 
 ---
 
+## Phase 9: Real Local AI Workflow Check
+
+Goal:
+Confirm that the external ComfyUI workflows are real production workflows, not only queue tests.
+
+Tasks:
+- Verify that the prediction workflow actually uses the color rough image
+- Prefer img2img or ControlNet-style structure for prediction generation
+- Verify that the hand inpainting workflow actually uses both selected candidate and mask image
+- Keep workflow files in API-format JSON
+- Keep all models inside the user's external ComfyUI installation
+
+Completion condition:
+The app can queue workflows that use the provided image inputs in ComfyUI.
+
+---
+
+## Phase 10: Generation Completion and Output Pickup
+
+Goal:
+Reduce manual file handling after pressing regenerate buttons.
+
+Tasks:
+- Store the prompt ID returned by ComfyUI
+- Check ComfyUI history for that prompt ID
+- Detect when generation has finished
+- Find generated image file names from ComfyUI history
+- Copy prediction outputs into `project_output/predictions/`
+- Copy hand reference outputs into `project_output/hand_refs/`
+- Refresh the UI after files are copied
+
+Completion condition:
+The user can press regenerate, wait, and see generated images appear in the app without manually copying files.
+
+---
+
+## Phase 11: Beginner-Friendly Generation Flow
+
+Goal:
+Make the local AI workflow easier to use and easier to recover from when something is missing.
+
+Tasks:
+- Show clearer status while generation is queued or waiting
+- Explain when ComfyUI is not running
+- Explain when workflow placeholders are missing
+- Explain when ComfyUI generated files but the app could not copy them
+- Prevent hand reference generation when selected candidate or mask is missing
+- Keep the UI simple and avoid advanced ComfyUI controls inside this app
+
+Completion condition:
+The user can follow the full workflow with simple messages and minimal manual checking.
+
+---
+
+## Phase 12: v0.1 Validation
+
+Goal:
+Confirm the first practical version works from start to finish.
+
+Tasks:
+- Test with one real color rough image
+- Generate prediction candidates through external ComfyUI
+- Select one candidate
+- Draw and save a hand mask
+- Generate hand reference images through external ComfyUI
+- Export a hand reference sheet
+- Confirm metadata files are saved
+- Update user-facing setup notes based on real test results
+
+Completion condition:
+The full color rough to hand reference workflow works locally with external ComfyUI and user-provided models.
+
+---
+
 ## Not Planned for Initial Version
 
 - Local reference search

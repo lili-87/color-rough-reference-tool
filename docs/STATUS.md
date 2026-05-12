@@ -129,6 +129,7 @@ The minimal UI now shows a compact project summary with the current output folde
 The minimal UI now has a `Check workflows` button that locally validates required workflow placeholders without connecting to ComfyUI.
 ComfyUI workflow requirements are now documented in `docs/COMFYUI_WORKFLOW_REQUIREMENTS.md`, including required placeholders and expected output folders.
 Local AI setup guidance is now documented in `docs/LOCAL_AI_SETUP_GUIDE.md`.
+The post-AI setup implementation plan is now documented in `docs/ROADMAP.md` and `docs/TASK_QUEUE.md`.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
@@ -136,7 +137,8 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No live ComfyUI connection check or generation completion waiting exists yet.
+The app can queue workflows to an external ComfyUI endpoint when ComfyUI is running and the workflow JSON is valid.
+It still does not wait for generation completion or automatically copy ComfyUI outputs into the project folders.
 
 ---
 
@@ -169,15 +171,15 @@ No live ComfyUI connection check or generation completion waiting exists yet.
 
 ## Last Completed Task
 
-Phase 8:
-Added workflow validation UI and local AI setup guidance for the last step before installing generation AI.
+Planning:
+Documented the post-AI setup implementation plan after confirming that the app can queue a prediction workflow in external ComfyUI.
 
 ---
 
 ## Current Next Task
 
-AI setup:
-The app is ready for the user-side ComfyUI and local model installation step.
+Phase 9.1:
+Verify that the prediction workflow actually uses the color rough image input, not only that it can be queued.
 
 ---
 
@@ -187,6 +189,8 @@ The app is ready for the user-side ComfyUI and local model installation step.
 - SDXL can be heavy on weaker GPUs.
 - Manual masking is intentionally used to avoid adding model-training complexity.
 - ComfyUI setup remains a user-side responsibility.
+- ComfyUI `Load Image` nodes may need files in ComfyUI's expected input location, depending on the workflow. If a workflow uses absolute paths incorrectly, queueing may succeed while generation still does not use the image as intended.
+- The current workflow test can prove that a placeholder exists, but it cannot fully prove that the node is connected to the generation path.
 
 ---
 
