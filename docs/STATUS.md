@@ -117,6 +117,7 @@ Supported hand reference output image formats are `png`, `jpg`, `jpeg`, and `web
 The minimal UI can now show hand reference images from `project_output/hand_refs` in a simple thumbnail area.
 Images that Tkinter can preview are shown as small thumbnails; unsupported preview formats still appear by file name.
 Missing, empty, or invalid hand reference output folders are now handled with simple status messages instead of crashing the UI.
+The minimal UI can now export a simple hand reference sheet and show the saved sheet path after export.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
@@ -124,7 +125,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No live ComfyUI connection check, generation completion waiting, or save/export UI exists yet.
+No live ComfyUI connection check or generation completion waiting exists yet.
 
 ---
 
@@ -157,15 +158,15 @@ No live ComfyUI connection check, generation completion waiting, or save/export 
 
 ## Last Completed Task
 
-Phase 7.4:
-Added minimal simple hand reference sheet image export.
+Phase 7.5:
+Added minimal save/export confirmation UI for hand reference sheet export.
 
 ---
 
 ## Current Next Task
 
-Phase 7.5:
-Add save/export confirmation UI.
+Phase 8:
+Begin usability improvements, starting with better thumbnail display.
 
 ---
 

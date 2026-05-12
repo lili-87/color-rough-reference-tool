@@ -17,6 +17,7 @@ from color_rough_ref_tool.core.mask_image import (
     RectangleMask,
     save_mask_png,
 )
+from color_rough_ref_tool.core.hand_reference_sheet import export_hand_reference_sheet
 from color_rough_ref_tool.core.project_output import prepare_project_output
 from color_rough_ref_tool.core.selection_metadata import (
     SelectedCandidateMetadata,
@@ -141,6 +142,12 @@ def format_hand_reference_output_result(result: HandReferenceOutputReadResult) -
     if result.ok:
         return format_hand_reference_output_count(result.images)
     return " ".join(result.messages)
+
+
+def format_exported_hand_reference_sheet_message(sheet_path: Path) -> str:
+    """Return a short status message after exporting the hand reference sheet."""
+
+    return f"Exported hand reference sheet: {sheet_path.as_posix()}"
 
 
 def format_mask_candidate_message(metadata: SelectedCandidateMetadata) -> str:
@@ -319,8 +326,13 @@ class ColorRoughReferenceApp:
         hand_reference_frame = ttk.LabelFrame(content_pane, text="Hand references", padding=8)
         content_pane.add(hand_reference_frame, weight=1)
         hand_reference_frame.columnconfigure(0, weight=1)
+        ttk.Button(
+            hand_reference_frame,
+            text="Export sheet",
+            command=self.export_hand_reference_sheet,
+        ).grid(row=0, column=0, sticky="w", pady=(0, 8))
         self.hand_reference_grid = ttk.Frame(hand_reference_frame)
-        self.hand_reference_grid.grid(row=0, column=0, sticky="nw")
+        self.hand_reference_grid.grid(row=1, column=0, sticky="nw")
         ttk.Label(
             self.hand_reference_grid,
             text="No hand reference images loaded",
@@ -533,6 +545,25 @@ class ColorRoughReferenceApp:
                 ttk.Label(item_frame, image=image).grid(row=0, column=0)
 
             ttk.Label(item_frame, text=output.file_name).grid(row=1, column=0, pady=(4, 0))
+
+    def export_hand_reference_sheet(self) -> None:
+        try:
+            settings = self._settings_from_form()
+            output_folders = prepare_project_output(settings.default_output_dir)
+            result = read_hand_reference_outputs_safely(output_folders.hand_refs)
+            if not result.ok:
+                message = format_hand_reference_output_result(result)
+                self.status_message.set(message)
+                messagebox.showinfo("Hand reference sheet", message)
+                return
+            sheet_path = export_hand_reference_sheet(result.images, output_folders.sheets)
+        except (OSError, ValueError) as error:
+            messagebox.showerror("Hand reference sheet", str(error))
+            return
+
+        message = format_exported_hand_reference_sheet_message(sheet_path)
+        self.status_message.set(message)
+        messagebox.showinfo("Hand reference sheet", f"Export complete:\n{sheet_path}")
 
     def select_prediction(self, output: PredictionOutputImage) -> None:
         self.selected_prediction_path.set(output.path.as_posix())

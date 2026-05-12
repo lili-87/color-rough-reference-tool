@@ -16,6 +16,7 @@ from color_rough_ref_tool.ui.app import (
     SettingsFormValues,
     build_settings_from_form,
     format_configuration_message,
+    format_exported_hand_reference_sheet_message,
     format_hand_reference_output_count,
     format_hand_reference_output_result,
     format_prediction_output_count,
@@ -145,6 +146,14 @@ class UiAppTest(unittest.TestCase):
         self.assertEqual(
             format_hand_reference_output_result(result),
             "No hand reference images were found in: project_output/hand_refs",
+        )
+
+    def test_format_exported_hand_reference_sheet_message_reports_saved_path(self) -> None:
+        self.assertEqual(
+            format_exported_hand_reference_sheet_message(
+                Path("project_output/sheets/hand_sheet_001.png")
+            ),
+            "Exported hand reference sheet: project_output/sheets/hand_sheet_001.png",
         )
 
     def test_format_mask_candidate_message_reports_file_name(self) -> None:
