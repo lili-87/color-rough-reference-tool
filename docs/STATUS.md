@@ -90,6 +90,7 @@ workflows/hand_inpainting_workflow.json
 
 These are placeholders for user-provided ComfyUI workflow JSON files.
 They do not include ComfyUI, models, checkpoints, paid APIs, or cloud execution.
+The same module can now locally check whether workflow JSON contains the placeholders needed for prediction input and hand inpainting input.
 
 Minimal prediction workflow triggering now exists in `src/color_rough_ref_tool/integrations/comfyui/prediction.py`.
 It can load the configured prediction workflow JSON and send it to an external ComfyUI `/prompt` endpoint.
@@ -167,7 +168,7 @@ No live ComfyUI connection check or generation completion waiting exists yet.
 ## Last Completed Task
 
 Phase 8:
-Added a ComfyUI workflow requirements guide for preparing real external workflow files.
+Added local workflow placeholder validation helpers for real external workflow preparation.
 
 ---
 
