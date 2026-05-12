@@ -135,6 +135,23 @@ def hand_reference_output_folder(settings: AppSettings) -> Path:
     return Path(settings.default_output_dir) / "hand_refs"
 
 
+def format_project_reopen_message(
+    project_output_dir: Path | str,
+    prediction_count: int,
+    hand_reference_count: int,
+    selected_candidate_loaded: bool,
+) -> str:
+    """Return a short status message after reopening saved project output."""
+
+    message = (
+        f"Reopened project output: {Path(project_output_dir).as_posix()} | "
+        f"predictions: {prediction_count} | hand references: {hand_reference_count}"
+    )
+    if selected_candidate_loaded:
+        return f"{message} | selected candidate loaded"
+    return message
+
+
 def format_prediction_output_count(outputs: tuple[PredictionOutputImage, ...]) -> str:
     """Return a short UI status message for loaded prediction outputs."""
 
@@ -293,7 +310,7 @@ class ColorRoughReferenceApp:
         self.root.title(WINDOW_TITLE)
         self.root.minsize(760, 560)
         self._build_layout()
-        self.load_hand_reference_outputs()
+        self.reopen_project_outputs()
 
     def _build_layout(self) -> None:
         container = ttk.Frame(self.root, padding=16)
@@ -351,6 +368,10 @@ class ColorRoughReferenceApp:
             text="Regenerate prediction",
             command=self.regenerate_prediction,
         ).pack(
+            side="left",
+            padx=(0, 8),
+        )
+        ttk.Button(button_bar, text="Reopen project", command=self.reopen_project_outputs).pack(
             side="left",
             padx=(0, 8),
         )
@@ -659,6 +680,42 @@ class ColorRoughReferenceApp:
 
         self._render_hand_reference_outputs(result.images)
         self.status_message.set(format_hand_reference_output_result(result))
+
+    def reopen_project_outputs(self) -> None:
+        """Reload saved outputs from the current project output folder."""
+
+        try:
+            settings = self._settings_from_form()
+            output_folders = prepare_project_output(settings.default_output_dir)
+            prediction_result = read_prediction_outputs_safely(output_folders.predictions)
+            hand_reference_result = read_hand_reference_outputs_safely(output_folders.hand_refs)
+        except (OSError, ValueError) as error:
+            self.status_message.set(format_error_message("reopen the project output", error).replace("\n", " "))
+            return
+
+        self._render_prediction_outputs(prediction_result.images)
+        self._render_hand_reference_outputs(hand_reference_result.images)
+        selected_candidate_loaded = self._restore_saved_selected_candidate_preview(output_folders.metadata)
+        self.status_message.set(
+            format_project_reopen_message(
+                output_folders.root,
+                len(prediction_result.images),
+                len(hand_reference_result.images),
+                selected_candidate_loaded,
+            )
+        )
+
+    def _restore_saved_selected_candidate_preview(self, metadata_dir: Path) -> bool:
+        try:
+            metadata = load_selected_candidate_metadata(metadata_dir)
+            selected_path = Path(metadata.saved_path)
+            if not selected_path.exists() or not selected_path.is_file():
+                return False
+        except (FileNotFoundError, OSError, ValueError):
+            return False
+
+        self._render_mask_preview(selected_path, metadata)
+        return True
 
     def _render_hand_reference_outputs(
         self,

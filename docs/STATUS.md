@@ -122,6 +122,8 @@ Images that Tkinter can preview are shown as small thumbnails; unsupported previ
 The minimal UI can now queue the hand inpainting workflow again from the saved selected candidate and saved hand mask.
 Missing, empty, or invalid hand reference output folders are now handled with simple status messages instead of crashing the UI.
 The minimal UI can now export a simple hand reference sheet and show the saved sheet path after export.
+The minimal UI now reopens the configured project output on startup, reloads saved prediction and hand reference thumbnails, and restores the saved selected candidate preview when possible.
+It also has a simple `Reopen project` button for reloading the current `Project output` folder after changing that path.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
@@ -163,14 +165,15 @@ No live ComfyUI connection check or generation completion waiting exists yet.
 ## Last Completed Task
 
 Phase 8:
-Added clearer beginner-friendly error messages in the UI.
+Added simple project reopen support for the configured project output.
 
 ---
 
 ## Current Next Task
 
 Phase 8:
-Continue usability improvements, with simple project reopen support still pending.
+No unfinished task remains in `docs/TASK_QUEUE.md`.
+Choose the next small task before implementation.
 
 ---
 

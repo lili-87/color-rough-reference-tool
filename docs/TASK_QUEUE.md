@@ -69,4 +69,4 @@ Codex should work on the next unfinished task only unless the user says otherwis
 - [x] Add regenerate prediction button.
 - [x] Add regenerate hand reference button.
 - [x] Add clearer error messages.
-- [ ] Add simple project reopen support.
+- [x] Add simple project reopen support.
