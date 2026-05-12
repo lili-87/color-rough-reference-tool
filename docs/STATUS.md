@@ -125,6 +125,7 @@ The minimal UI can now export a simple hand reference sheet and show the saved s
 The minimal UI now reopens the configured project output on startup, reloads saved prediction and hand reference thumbnails, and restores the saved selected candidate preview when possible.
 It also has a simple `Reopen project` button for reloading the current `Project output` folder after changing that path.
 The minimal UI now shows a compact project summary with the current output folder, prediction count, selected candidate status, mask status, hand reference count, and exported sheet count.
+ComfyUI workflow requirements are now documented in `docs/COMFYUI_WORKFLOW_REQUIREMENTS.md`, including required placeholders and expected output folders.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
@@ -166,7 +167,7 @@ No live ComfyUI connection check or generation completion waiting exists yet.
 ## Last Completed Task
 
 Phase 8:
-Added a clear project summary display for the configured project output.
+Added a ComfyUI workflow requirements guide for preparing real external workflow files.
 
 ---
 

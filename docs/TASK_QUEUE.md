@@ -71,3 +71,4 @@ Codex should work on the next unfinished task only unless the user says otherwis
 - [x] Add clearer error messages.
 - [x] Add simple project reopen support.
 - [x] Add clear project summary.
+- [x] Add ComfyUI workflow requirements guide.
