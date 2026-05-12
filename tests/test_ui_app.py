@@ -32,6 +32,7 @@ from color_rough_ref_tool.ui.app import (
     format_selected_prediction_message,
     format_project_reopen_message,
     format_project_summary,
+    format_workflow_validation_message,
     hand_mask_path_for_candidate,
     hand_reference_output_folder,
     normalize_mask_brush_size,
@@ -139,6 +140,22 @@ class UiAppTest(unittest.TestCase):
             ),
             "Project: project_output | predictions: 4 | selected: yes | mask: no | hand refs: 3 | sheets: 1",
         )
+
+    def test_format_workflow_validation_message_reports_ok(self) -> None:
+        self.assertEqual(
+            format_workflow_validation_message((), ()),
+            "Workflow placeholders look OK.",
+        )
+
+    def test_format_workflow_validation_message_reports_missing_items(self) -> None:
+        message = format_workflow_validation_message(
+            ("color rough image",),
+            ("hand mask image",),
+        )
+
+        self.assertIn("Please fix workflow placeholders:", message)
+        self.assertIn("Prediction workflow missing: color rough image", message)
+        self.assertIn("Hand inpainting workflow missing: hand mask image", message)
 
     def test_format_prediction_output_count_reports_count(self) -> None:
         output = PredictionOutputImage(

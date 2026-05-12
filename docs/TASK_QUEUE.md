@@ -73,3 +73,5 @@ Codex should work on the next unfinished task only unless the user says otherwis
 - [x] Add clear project summary.
 - [x] Add ComfyUI workflow requirements guide.
 - [x] Add local workflow placeholder validation helper.
+- [x] Add workflow placeholder validation UI.
+- [x] Add local AI setup guide.

@@ -126,7 +126,9 @@ The minimal UI can now export a simple hand reference sheet and show the saved s
 The minimal UI now reopens the configured project output on startup, reloads saved prediction and hand reference thumbnails, and restores the saved selected candidate preview when possible.
 It also has a simple `Reopen project` button for reloading the current `Project output` folder after changing that path.
 The minimal UI now shows a compact project summary with the current output folder, prediction count, selected candidate status, mask status, hand reference count, and exported sheet count.
+The minimal UI now has a `Check workflows` button that locally validates required workflow placeholders without connecting to ComfyUI.
 ComfyUI workflow requirements are now documented in `docs/COMFYUI_WORKFLOW_REQUIREMENTS.md`, including required placeholders and expected output folders.
+Local AI setup guidance is now documented in `docs/LOCAL_AI_SETUP_GUIDE.md`.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
 It records a user-selected existing file path as the current color rough.
@@ -168,15 +170,14 @@ No live ComfyUI connection check or generation completion waiting exists yet.
 ## Last Completed Task
 
 Phase 8:
-Added local workflow placeholder validation helpers for real external workflow preparation.
+Added workflow validation UI and local AI setup guidance for the last step before installing generation AI.
 
 ---
 
 ## Current Next Task
 
-Phase 8:
-No unfinished task remains in `docs/TASK_QUEUE.md`.
-Choose the next small task before implementation.
+AI setup:
+The app is ready for the user-side ComfyUI and local model installation step.
 
 ---
 

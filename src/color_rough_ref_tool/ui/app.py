@@ -40,6 +40,7 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
     PredictionOutputImage,
     PredictionOutputReadResult,
     SavedPredictionCandidate,
+    load_prediction_workflow,
     read_prediction_outputs_safely,
     save_selected_prediction_candidate,
     trigger_prediction_workflow,
@@ -47,8 +48,13 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
 from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
     HandReferenceOutputImage,
     HandReferenceOutputReadResult,
+    load_hand_inpainting_workflow,
     read_hand_reference_outputs_safely,
     trigger_hand_inpainting_workflow,
+)
+from color_rough_ref_tool.integrations.comfyui.workflow_placeholders import (
+    validate_hand_inpainting_workflow_placeholders,
+    validate_prediction_workflow_placeholders,
 )
 
 
@@ -170,6 +176,22 @@ def format_project_summary(
         f"predictions: {prediction_count} | selected: {selected_status} | "
         f"mask: {mask_status} | hand refs: {hand_reference_count} | sheets: {sheet_count}"
     )
+
+
+def format_workflow_validation_message(
+    prediction_missing: tuple[str, ...],
+    hand_inpainting_missing: tuple[str, ...],
+) -> str:
+    """Return a short UI message for local workflow placeholder validation."""
+
+    messages: list[str] = []
+    if prediction_missing:
+        messages.append(f"- Prediction workflow missing: {', '.join(prediction_missing)}")
+    if hand_inpainting_missing:
+        messages.append(f"- Hand inpainting workflow missing: {', '.join(hand_inpainting_missing)}")
+    if not messages:
+        return "Workflow placeholders look OK."
+    return "Please fix workflow placeholders:\n" + "\n".join(messages)
 
 
 def format_prediction_output_count(outputs: tuple[PredictionOutputImage, ...]) -> str:
@@ -373,6 +395,10 @@ class ColorRoughReferenceApp:
         button_bar = ttk.Frame(container)
         button_bar.grid(row=6, column=0, columnspan=3, sticky="ew", pady=(16, 8))
         ttk.Button(button_bar, text="Check settings", command=self.check_settings).pack(
+            side="left",
+            padx=(0, 8),
+        )
+        ttk.Button(button_bar, text="Check workflows", command=self.check_workflows).pack(
             side="left",
             padx=(0, 8),
         )
@@ -584,6 +610,27 @@ class ColorRoughReferenceApp:
             messagebox.showinfo("Settings", message)
         else:
             messagebox.showerror("Settings", message)
+
+    def check_workflows(self) -> None:
+        try:
+            settings = self._settings_from_form()
+            prediction_workflow = load_prediction_workflow(settings.prediction_workflow_path)
+            hand_workflow = load_hand_inpainting_workflow(settings.hand_inpainting_workflow_path)
+            prediction_result = validate_prediction_workflow_placeholders(prediction_workflow)
+            hand_result = validate_hand_inpainting_workflow_placeholders(hand_workflow)
+        except (FileNotFoundError, OSError, ValueError) as error:
+            messagebox.showerror("Workflow check", format_error_message("check workflow placeholders", error))
+            return
+
+        message = format_workflow_validation_message(
+            prediction_result.missing_requirements,
+            hand_result.missing_requirements,
+        )
+        self.status_message.set(message.replace("\n", " "))
+        if prediction_result.ok and hand_result.ok:
+            messagebox.showinfo("Workflow check", message)
+        else:
+            messagebox.showerror("Workflow check", message)
 
     def save_current_settings(self) -> None:
         try:
