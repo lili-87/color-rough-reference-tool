@@ -73,6 +73,8 @@ Project output folder creation now exists in `src/color_rough_ref_tool/core/proj
 It creates the standard `project_output` subfolders: `input`, `predictions`, `selected`, `masks`, `hand_refs`, `sheets`, and `metadata`.
 Minimal project metadata saving now exists in `src/color_rough_ref_tool/core/project_metadata.py`.
 It can save `project_output/metadata/project.json` with the project root, schema version, application name, and creation timestamp.
+Minimal prediction metadata saving now exists in `src/color_rough_ref_tool/core/prediction_metadata.py`.
+It can save `project_output/metadata/predictions.json` with prediction image file names, paths, sizes, and modified times.
 
 Workflow placeholder handling now exists in `src/color_rough_ref_tool/integrations/comfyui/workflow_placeholders.py`.
 The default workflow file locations are:
@@ -118,7 +120,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No live ComfyUI connection check, generation completion waiting, prediction metadata, hand reference metadata, sheet export, or save/export UI exists yet.
+No live ComfyUI connection check, generation completion waiting, hand reference metadata, sheet export, or save/export UI exists yet.
 
 ---
 
@@ -151,15 +153,15 @@ No live ComfyUI connection check, generation completion waiting, prediction meta
 
 ## Last Completed Task
 
-Phase 7.1:
-Added minimal `project.json` project metadata saving.
+Phase 7.2:
+Added minimal `predictions.json` prediction metadata saving.
 
 ---
 
 ## Current Next Task
 
-Phase 7.2:
-Save prediction metadata (`predictions.json`).
+Phase 7.3:
+Save hand reference metadata (`hand_refs.json`).
 
 ---
 
