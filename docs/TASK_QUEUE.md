@@ -57,7 +57,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 
 ## Phase 7: Save and Export
 
-- [ ] Phase 7.1: Save project metadata (`project.json`).
+- [x] Phase 7.1: Save project metadata (`project.json`).
 - [ ] Phase 7.2: Save prediction metadata (`predictions.json`).
 - [ ] Phase 7.3: Save hand reference metadata (`hand_refs.json`).
 - [ ] Phase 7.4: Export simple hand reference sheet image.

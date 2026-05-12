@@ -71,6 +71,8 @@ It now has a minimal Tkinter app entry point and basic UI shell for selecting a 
 
 Project output folder creation now exists in `src/color_rough_ref_tool/core/project_output.py`.
 It creates the standard `project_output` subfolders: `input`, `predictions`, `selected`, `masks`, `hand_refs`, `sheets`, and `metadata`.
+Minimal project metadata saving now exists in `src/color_rough_ref_tool/core/project_metadata.py`.
+It can save `project_output/metadata/project.json` with the project root, schema version, application name, and creation timestamp.
 
 Workflow placeholder handling now exists in `src/color_rough_ref_tool/integrations/comfyui/workflow_placeholders.py`.
 The default workflow file locations are:
@@ -116,7 +118,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No live ComfyUI connection check or generation completion waiting exists yet.
+No live ComfyUI connection check, generation completion waiting, prediction metadata, hand reference metadata, sheet export, or save/export UI exists yet.
 
 ---
 
@@ -149,15 +151,15 @@ No live ComfyUI connection check or generation completion waiting exists yet.
 
 ## Last Completed Task
 
-Phase 6.5:
-Added minimal hand reference output error handling.
+Phase 7.1:
+Added minimal `project.json` project metadata saving.
 
 ---
 
 ## Current Next Task
 
-Phase 7.1:
-Save project metadata (`project.json`).
+Phase 7.2:
+Save prediction metadata (`predictions.json`).
 
 ---
 
