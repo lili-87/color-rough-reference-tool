@@ -65,6 +65,7 @@ MAX_MASK_BRUSH_SIZE = 80
 MASK_TOOL_BRUSH = "brush"
 MASK_TOOL_RECTANGLE = "rectangle"
 MASK_TOOLS = frozenset({MASK_TOOL_BRUSH, MASK_TOOL_RECTANGLE})
+SUMMARY_IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".webp"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -150,6 +151,25 @@ def format_project_reopen_message(
     if selected_candidate_loaded:
         return f"{message} | selected candidate loaded"
     return message
+
+
+def format_project_summary(
+    project_output_dir: Path | str,
+    prediction_count: int,
+    selected_candidate_exists: bool,
+    hand_mask_exists: bool,
+    hand_reference_count: int,
+    sheet_count: int,
+) -> str:
+    """Return a compact summary of the current project output."""
+
+    selected_status = "yes" if selected_candidate_exists else "no"
+    mask_status = "yes" if hand_mask_exists else "no"
+    return (
+        f"Project: {Path(project_output_dir).as_posix()} | "
+        f"predictions: {prediction_count} | selected: {selected_status} | "
+        f"mask: {mask_status} | hand refs: {hand_reference_count} | sheets: {sheet_count}"
+    )
 
 
 def format_prediction_output_count(outputs: tuple[PredictionOutputImage, ...]) -> str:
@@ -289,6 +309,7 @@ class ColorRoughReferenceApp:
         self.color_rough_path = tk.StringVar(value="No color rough selected")
         self.selected_color_rough_file_path = tk.StringVar(value="")
         self.status_message = tk.StringVar(value="Ready")
+        self.project_summary_message = tk.StringVar(value="Project: not loaded yet")
         self.selected_prediction_path = tk.StringVar(value="")
         self.prediction_thumbnails: list[tk.PhotoImage] = []
         self.hand_reference_thumbnails: list[tk.PhotoImage] = []
@@ -383,9 +404,18 @@ class ColorRoughReferenceApp:
             side="left",
         )
 
+        summary_frame = ttk.LabelFrame(container, text="Project summary", padding=8)
+        summary_frame.grid(row=7, column=0, columnspan=3, sticky="ew", pady=(0, 8))
+        summary_frame.columnconfigure(0, weight=1)
+        ttk.Label(summary_frame, textvariable=self.project_summary_message).grid(
+            row=0,
+            column=0,
+            sticky="ew",
+        )
+
         content_pane = ttk.PanedWindow(container, orient=tk.VERTICAL)
-        content_pane.grid(row=7, column=0, columnspan=3, sticky="nsew", pady=(8, 0))
-        container.rowconfigure(7, weight=1)
+        content_pane.grid(row=8, column=0, columnspan=3, sticky="nsew", pady=(8, 0))
+        container.rowconfigure(8, weight=1)
 
         prediction_frame = ttk.LabelFrame(content_pane, text="Prediction outputs", padding=8)
         content_pane.add(prediction_frame, weight=1)
@@ -463,7 +493,7 @@ class ColorRoughReferenceApp:
         ).grid(row=0, column=0, sticky="w")
 
         ttk.Label(container, textvariable=self.status_message).grid(
-            row=8,
+            row=9,
             column=0,
             columnspan=3,
             sticky="ew",
@@ -615,6 +645,7 @@ class ColorRoughReferenceApp:
             return
 
         self._render_prediction_outputs(result.images)
+        self.refresh_project_summary()
         status = format_prediction_output_result(result)
         self.status_message.set(status)
         if not result.ok:
@@ -679,6 +710,7 @@ class ColorRoughReferenceApp:
             return
 
         self._render_hand_reference_outputs(result.images)
+        self.refresh_project_summary()
         self.status_message.set(format_hand_reference_output_result(result))
 
     def reopen_project_outputs(self) -> None:
@@ -696,6 +728,17 @@ class ColorRoughReferenceApp:
         self._render_prediction_outputs(prediction_result.images)
         self._render_hand_reference_outputs(hand_reference_result.images)
         selected_candidate_loaded = self._restore_saved_selected_candidate_preview(output_folders.metadata)
+        hand_mask_exists = self._saved_hand_mask_exists(output_folders.metadata, output_folders.masks)
+        self.project_summary_message.set(
+            format_project_summary(
+                output_folders.root,
+                len(prediction_result.images),
+                selected_candidate_loaded,
+                hand_mask_exists,
+                len(hand_reference_result.images),
+                self._count_summary_images(output_folders.sheets),
+            )
+        )
         self.status_message.set(
             format_project_reopen_message(
                 output_folders.root,
@@ -716,6 +759,54 @@ class ColorRoughReferenceApp:
 
         self._render_mask_preview(selected_path, metadata)
         return True
+
+    def refresh_project_summary(self) -> None:
+        try:
+            settings = self._settings_from_form()
+            output_folders = prepare_project_output(settings.default_output_dir)
+            prediction_result = read_prediction_outputs_safely(output_folders.predictions)
+            hand_reference_result = read_hand_reference_outputs_safely(output_folders.hand_refs)
+        except (OSError, ValueError) as error:
+            self.project_summary_message.set(format_error_message("refresh the project summary", error).replace("\n", " "))
+            return
+
+        selected_candidate_exists = self._saved_selected_candidate_exists(output_folders.metadata)
+        self.project_summary_message.set(
+            format_project_summary(
+                output_folders.root,
+                len(prediction_result.images),
+                selected_candidate_exists,
+                self._saved_hand_mask_exists(output_folders.metadata, output_folders.masks),
+                len(hand_reference_result.images),
+                self._count_summary_images(output_folders.sheets),
+            )
+        )
+
+    def _saved_selected_candidate_exists(self, metadata_dir: Path) -> bool:
+        try:
+            metadata = load_selected_candidate_metadata(metadata_dir)
+            selected_path = Path(metadata.saved_path)
+        except (FileNotFoundError, OSError, ValueError):
+            return False
+        return selected_path.exists() and selected_path.is_file()
+
+    def _saved_hand_mask_exists(self, metadata_dir: Path, masks_dir: Path) -> bool:
+        try:
+            metadata = load_selected_candidate_metadata(metadata_dir)
+        except (FileNotFoundError, OSError, ValueError):
+            return False
+
+        mask_path = hand_mask_path_for_candidate(masks_dir, metadata.file_name)
+        return mask_path.exists() and mask_path.is_file()
+
+    def _count_summary_images(self, folder: Path) -> int:
+        if not folder.exists() or not folder.is_dir():
+            return 0
+        return sum(
+            1
+            for path in folder.iterdir()
+            if path.is_file() and path.suffix.lower() in SUMMARY_IMAGE_EXTENSIONS
+        )
 
     def _render_hand_reference_outputs(
         self,
@@ -777,6 +868,7 @@ class ColorRoughReferenceApp:
             return
 
         message = format_exported_hand_reference_sheet_message(sheet_path)
+        self.refresh_project_summary()
         self.status_message.set(message)
         messagebox.showinfo("Hand reference sheet", f"Export complete:\n{sheet_path}")
 
@@ -830,6 +922,7 @@ class ColorRoughReferenceApp:
             return
 
         message = format_saved_prediction_message(saved)
+        self.refresh_project_summary()
         self.status_message.set(message)
         messagebox.showinfo(
             "Selected prediction",
@@ -851,6 +944,7 @@ class ColorRoughReferenceApp:
             return
 
         self._render_mask_preview(selected_path, metadata)
+        self.refresh_project_summary()
         message = format_mask_candidate_message(metadata)
         self.status_message.set(message)
 
@@ -1051,6 +1145,7 @@ class ColorRoughReferenceApp:
             return
 
         self.status_message.set(f"Saved mask: {saved_path}")
+        self.refresh_project_summary()
         messagebox.showinfo("Mask editing", f"Saved mask:\n{saved_path}")
 
     def _load_thumbnail_image(self, path: Path) -> tk.PhotoImage | None:

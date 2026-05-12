@@ -31,6 +31,7 @@ from color_rough_ref_tool.ui.app import (
     format_saved_prediction_message,
     format_selected_prediction_message,
     format_project_reopen_message,
+    format_project_summary,
     hand_mask_path_for_candidate,
     hand_reference_output_folder,
     normalize_mask_brush_size,
@@ -124,6 +125,19 @@ class UiAppTest(unittest.TestCase):
                 selected_candidate_loaded=True,
             ),
             "Reopened project output: project_output | predictions: 2 | hand references: 3 | selected candidate loaded",
+        )
+
+    def test_format_project_summary_reports_current_project_state(self) -> None:
+        self.assertEqual(
+            format_project_summary(
+                Path("project_output"),
+                prediction_count=4,
+                selected_candidate_exists=True,
+                hand_mask_exists=False,
+                hand_reference_count=3,
+                sheet_count=1,
+            ),
+            "Project: project_output | predictions: 4 | selected: yes | mask: no | hand refs: 3 | sheets: 1",
         )
 
     def test_format_prediction_output_count_reports_count(self) -> None:

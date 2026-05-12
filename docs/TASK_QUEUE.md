@@ -70,3 +70,4 @@ Codex should work on the next unfinished task only unless the user says otherwis
 - [x] Add regenerate hand reference button.
 - [x] Add clearer error messages.
 - [x] Add simple project reopen support.
+- [x] Add clear project summary.
