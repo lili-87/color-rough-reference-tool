@@ -100,6 +100,7 @@ Supported prediction output image formats are `png`, `jpg`, `jpeg`, and `webp`.
 It does not wait for generation completion yet.
 The minimal UI can now load prediction outputs from `project_output/predictions` and show them in a simple prediction output area.
 Images that Tkinter can preview are shown as small thumbnails; unsupported preview formats still appear by file name.
+Thumbnail cards now use a slightly clearer three-column layout with compact file names and file size labels.
 Missing, empty, or invalid prediction output folders are now handled with simple status messages instead of crashing the UI.
 The minimal UI can now select one loaded prediction candidate with a radio button and show the selected file name in the status area.
 The minimal UI can now copy the selected prediction candidate into `project_output/selected` while keeping the original file name.
@@ -158,15 +159,15 @@ No live ComfyUI connection check or generation completion waiting exists yet.
 
 ## Last Completed Task
 
-Phase 7.5:
-Added minimal save/export confirmation UI for hand reference sheet export.
+Phase 8 first small task:
+Improved thumbnail layout readability with a clearer grid, compact labels, and file size display.
 
 ---
 
 ## Current Next Task
 
 Phase 8:
-Begin usability improvements, starting with better thumbnail display.
+Continue usability improvements, with regenerate buttons still pending.
 
 ---
 

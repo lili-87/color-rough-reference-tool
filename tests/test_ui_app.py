@@ -19,6 +19,8 @@ from color_rough_ref_tool.ui.app import (
     format_exported_hand_reference_sheet_message,
     format_hand_reference_output_count,
     format_hand_reference_output_result,
+    format_thumbnail_file_label,
+    format_thumbnail_file_size,
     format_prediction_output_count,
     format_prediction_output_result,
     format_mask_candidate_message,
@@ -28,6 +30,7 @@ from color_rough_ref_tool.ui.app import (
     normalize_mask_brush_size,
     normalize_mask_tool,
     prediction_output_folder,
+    thumbnail_grid_position,
 )
 
 
@@ -155,6 +158,22 @@ class UiAppTest(unittest.TestCase):
             ),
             "Exported hand reference sheet: project_output/sheets/hand_sheet_001.png",
         )
+
+    def test_thumbnail_grid_position_uses_three_column_layout_by_default(self) -> None:
+        self.assertEqual(thumbnail_grid_position(0), (0, 0))
+        self.assertEqual(thumbnail_grid_position(2), (0, 2))
+        self.assertEqual(thumbnail_grid_position(3), (1, 0))
+
+    def test_format_thumbnail_file_label_shortens_long_names(self) -> None:
+        self.assertEqual(format_thumbnail_file_label("pred_001.png"), "pred_001.png")
+        self.assertEqual(
+            format_thumbnail_file_label("pred_002_hand_reference_result_long_name.png", 24),
+            "pred_002_hand_ref....png",
+        )
+
+    def test_format_thumbnail_file_size_reports_small_readable_size(self) -> None:
+        self.assertEqual(format_thumbnail_file_size(512), "512 B")
+        self.assertEqual(format_thumbnail_file_size(1536), "1.5 KB")
 
     def test_format_mask_candidate_message_reports_file_name(self) -> None:
         metadata = SelectedCandidateMetadata(

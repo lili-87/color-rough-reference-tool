@@ -51,6 +51,9 @@ from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
 WINDOW_TITLE = "Color Rough Reference Tool"
 PREDICTION_THUMBNAIL_MAX_SIZE = 160
 HAND_REFERENCE_THUMBNAIL_MAX_SIZE = 160
+THUMBNAIL_GRID_COLUMNS = 3
+THUMBNAIL_LABEL_MAX_LENGTH = 30
+THUMBNAIL_LABEL_WRAP_LENGTH = 150
 MASK_PREVIEW_MAX_SIZE = 320
 DEFAULT_MASK_BRUSH_SIZE = 18
 MIN_MASK_BRUSH_SIZE = 1
@@ -148,6 +151,42 @@ def format_exported_hand_reference_sheet_message(sheet_path: Path) -> str:
     """Return a short status message after exporting the hand reference sheet."""
 
     return f"Exported hand reference sheet: {sheet_path.as_posix()}"
+
+
+def thumbnail_grid_position(index: int, columns: int = THUMBNAIL_GRID_COLUMNS) -> tuple[int, int]:
+    """Return a row and column for a thumbnail item."""
+
+    if index < 0:
+        raise ValueError("Thumbnail index must not be negative.")
+    if columns <= 0:
+        raise ValueError("Thumbnail column count must be positive.")
+    return index // columns, index % columns
+
+
+def format_thumbnail_file_label(file_name: str, max_length: int = THUMBNAIL_LABEL_MAX_LENGTH) -> str:
+    """Return a compact file name label for thumbnail cards."""
+
+    if max_length < 8:
+        raise ValueError("Thumbnail label length must be at least 8.")
+    if len(file_name) <= max_length:
+        return file_name
+    path = Path(file_name)
+    suffix = path.suffix
+    suffix_length = len(suffix)
+    if suffix_length >= max_length - 4:
+        return file_name[: max_length - 3] + "..."
+    stem_limit = max_length - suffix_length - 3
+    return f"{path.stem[:stem_limit]}...{suffix}"
+
+
+def format_thumbnail_file_size(file_size_bytes: int) -> str:
+    """Return a small readable file size label for thumbnails."""
+
+    if file_size_bytes < 0:
+        raise ValueError("File size must not be negative.")
+    if file_size_bytes < 1024:
+        return f"{file_size_bytes} B"
+    return f"{file_size_bytes / 1024:.1f} KB"
 
 
 def format_mask_candidate_message(metadata: SelectedCandidateMetadata) -> str:
@@ -483,26 +522,40 @@ class ColorRoughReferenceApp:
             return
 
         for index, output in enumerate(outputs):
-            row = index // 4
-            column = index % 4
-            item_frame = ttk.Frame(self.prediction_grid, padding=6)
-            item_frame.grid(row=row, column=column, sticky="n", padx=4, pady=4)
+            row, column = thumbnail_grid_position(index)
+            item_frame = ttk.Frame(self.prediction_grid, padding=8, relief="groove")
+            item_frame.grid(row=row, column=column, sticky="n", padx=6, pady=6)
 
             image = self._load_thumbnail_image(output.path)
             if image is None:
-                ttk.Label(item_frame, text="[preview unavailable]").grid(row=0, column=0)
+                ttk.Label(
+                    item_frame,
+                    text="[preview unavailable]",
+                    width=22,
+                    anchor="center",
+                ).grid(row=0, column=0)
             else:
                 self.prediction_thumbnails.append(image)
                 ttk.Label(item_frame, image=image).grid(row=0, column=0)
 
-            ttk.Label(item_frame, text=output.file_name).grid(row=1, column=0, pady=(4, 0))
+            ttk.Label(
+                item_frame,
+                text=format_thumbnail_file_label(output.file_name),
+                wraplength=THUMBNAIL_LABEL_WRAP_LENGTH,
+                justify="center",
+            ).grid(row=1, column=0, pady=(6, 0))
+            ttk.Label(
+                item_frame,
+                text=format_thumbnail_file_size(output.file_size_bytes),
+                foreground="#555555",
+            ).grid(row=2, column=0, pady=(2, 0))
             ttk.Radiobutton(
                 item_frame,
                 text="Select",
                 variable=self.selected_prediction_path,
                 value=output.path.as_posix(),
                 command=lambda candidate=output: self.select_prediction(candidate),
-            ).grid(row=2, column=0, pady=(4, 0))
+            ).grid(row=3, column=0, pady=(6, 0))
 
     def load_hand_reference_outputs(self) -> None:
         try:
@@ -532,19 +585,33 @@ class ColorRoughReferenceApp:
             return
 
         for index, output in enumerate(outputs):
-            row = index // 4
-            column = index % 4
-            item_frame = ttk.Frame(self.hand_reference_grid, padding=6)
-            item_frame.grid(row=row, column=column, sticky="n", padx=4, pady=4)
+            row, column = thumbnail_grid_position(index)
+            item_frame = ttk.Frame(self.hand_reference_grid, padding=8, relief="groove")
+            item_frame.grid(row=row, column=column, sticky="n", padx=6, pady=6)
 
             image = self._load_hand_reference_thumbnail_image(output.path)
             if image is None:
-                ttk.Label(item_frame, text="[preview unavailable]").grid(row=0, column=0)
+                ttk.Label(
+                    item_frame,
+                    text="[preview unavailable]",
+                    width=22,
+                    anchor="center",
+                ).grid(row=0, column=0)
             else:
                 self.hand_reference_thumbnails.append(image)
                 ttk.Label(item_frame, image=image).grid(row=0, column=0)
 
-            ttk.Label(item_frame, text=output.file_name).grid(row=1, column=0, pady=(4, 0))
+            ttk.Label(
+                item_frame,
+                text=format_thumbnail_file_label(output.file_name),
+                wraplength=THUMBNAIL_LABEL_WRAP_LENGTH,
+                justify="center",
+            ).grid(row=1, column=0, pady=(6, 0))
+            ttk.Label(
+                item_frame,
+                text=format_thumbnail_file_size(output.file_size_bytes),
+                foreground="#555555",
+            ).grid(row=2, column=0, pady=(2, 0))
 
     def export_hand_reference_sheet(self) -> None:
         try:
