@@ -10,6 +10,7 @@ from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
     inject_hand_inpainting_paths,
     load_hand_inpainting_workflow,
     read_hand_reference_outputs,
+    read_hand_reference_outputs_safely,
     trigger_hand_inpainting_workflow,
 )
 
@@ -221,6 +222,36 @@ class ComfyUIHandInpaintingTest(unittest.TestCase):
     def test_read_hand_reference_outputs_rejects_missing_folder(self) -> None:
         with self.assertRaises(FileNotFoundError):
             read_hand_reference_outputs("missing_hand_refs")
+
+    def test_read_hand_reference_outputs_safely_reports_empty_folder(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            output_dir = Path(temp_dir) / "hand_refs"
+            output_dir.mkdir()
+
+            result = read_hand_reference_outputs_safely(output_dir)
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.images, ())
+        self.assertIn("No hand reference images were found", result.messages[0])
+
+    def test_read_hand_reference_outputs_safely_reports_missing_folder(self) -> None:
+        result = read_hand_reference_outputs_safely("missing_hand_refs")
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.images, ())
+        self.assertIn("Hand reference output folder does not exist", result.messages[0])
+
+    def test_read_hand_reference_outputs_safely_reports_non_folder_path(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            output_path = Path(temp_dir) / "hand_refs.txt"
+            output_path.write_text("not a folder\n", encoding="utf-8")
+
+            result = read_hand_reference_outputs_safely(output_path)
+
+        self.assertFalse(result.ok)
+        self.assertIn("must be a folder", result.messages[0])
 
 
 if __name__ == "__main__":

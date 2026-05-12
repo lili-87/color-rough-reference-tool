@@ -42,7 +42,8 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
 )
 from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
     HandReferenceOutputImage,
-    read_hand_reference_outputs,
+    HandReferenceOutputReadResult,
+    read_hand_reference_outputs_safely,
 )
 
 
@@ -132,6 +133,14 @@ def format_hand_reference_output_count(outputs: tuple[HandReferenceOutputImage, 
     if len(outputs) == 1:
         return "Loaded 1 hand reference image."
     return f"Loaded {len(outputs)} hand reference images."
+
+
+def format_hand_reference_output_result(result: HandReferenceOutputReadResult) -> str:
+    """Return a short status message for hand reference output loading."""
+
+    if result.ok:
+        return format_hand_reference_output_count(result.images)
+    return " ".join(result.messages)
 
 
 def format_mask_candidate_message(metadata: SelectedCandidateMetadata) -> str:
@@ -487,13 +496,13 @@ class ColorRoughReferenceApp:
         try:
             settings = self._settings_from_form()
             output_folders = prepare_project_output(settings.default_output_dir)
-            outputs = read_hand_reference_outputs(output_folders.hand_refs)
-        except (OSError, ValueError) as error:
+            result = read_hand_reference_outputs_safely(output_folders.hand_refs)
+        except ValueError as error:
             self.status_message.set(str(error))
             return
 
-        self._render_hand_reference_outputs(outputs)
-        self.status_message.set(format_hand_reference_output_count(outputs))
+        self._render_hand_reference_outputs(result.images)
+        self.status_message.set(format_hand_reference_output_result(result))
 
     def _render_hand_reference_outputs(
         self,

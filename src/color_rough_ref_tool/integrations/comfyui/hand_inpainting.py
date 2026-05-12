@@ -40,6 +40,18 @@ class HandReferenceOutputImage:
     modified_time: float
 
 
+@dataclass(frozen=True, slots=True)
+class HandReferenceOutputReadResult:
+    """Safe result for reading hand reference output images."""
+
+    images: tuple[HandReferenceOutputImage, ...]
+    messages: tuple[str, ...]
+
+    @property
+    def ok(self) -> bool:
+        return not self.messages
+
+
 def trigger_hand_inpainting_workflow(
     settings: AppSettings,
     *,
@@ -118,6 +130,23 @@ def read_hand_reference_outputs(output_dir: Path | str) -> tuple[HandReferenceOu
         )
 
     return tuple(images)
+
+
+def read_hand_reference_outputs_safely(output_dir: Path | str) -> HandReferenceOutputReadResult:
+    """Read hand reference outputs and return messages instead of raising for UI use."""
+
+    try:
+        images = read_hand_reference_outputs(output_dir)
+    except (FileNotFoundError, OSError, ValueError) as error:
+        return HandReferenceOutputReadResult(images=(), messages=(str(error),))
+
+    if not images:
+        return HandReferenceOutputReadResult(
+            images=(),
+            messages=(f"No hand reference images were found in: {Path(output_dir)}",),
+        )
+
+    return HandReferenceOutputReadResult(images=images, messages=())
 
 
 def inject_hand_inpainting_paths(

@@ -3,7 +3,10 @@ import unittest
 
 from color_rough_ref_tool.core.settings import AppSettings
 from color_rough_ref_tool.core.selection_metadata import SelectedCandidateMetadata
-from color_rough_ref_tool.integrations.comfyui.hand_inpainting import HandReferenceOutputImage
+from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
+    HandReferenceOutputImage,
+    HandReferenceOutputReadResult,
+)
 from color_rough_ref_tool.integrations.comfyui.prediction import (
     PredictionOutputImage,
     PredictionOutputReadResult,
@@ -14,6 +17,7 @@ from color_rough_ref_tool.ui.app import (
     build_settings_from_form,
     format_configuration_message,
     format_hand_reference_output_count,
+    format_hand_reference_output_result,
     format_prediction_output_count,
     format_prediction_output_result,
     format_mask_candidate_message,
@@ -131,6 +135,17 @@ class UiAppTest(unittest.TestCase):
 
         self.assertEqual(format_hand_reference_output_count(()), "Loaded 0 hand reference images.")
         self.assertEqual(format_hand_reference_output_count((output,)), "Loaded 1 hand reference image.")
+
+    def test_format_hand_reference_output_result_reports_messages(self) -> None:
+        result = HandReferenceOutputReadResult(
+            images=(),
+            messages=("No hand reference images were found in: project_output/hand_refs",),
+        )
+
+        self.assertEqual(
+            format_hand_reference_output_result(result),
+            "No hand reference images were found in: project_output/hand_refs",
+        )
 
     def test_format_mask_candidate_message_reports_file_name(self) -> None:
         metadata = SelectedCandidateMetadata(
