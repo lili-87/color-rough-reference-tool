@@ -77,6 +77,8 @@ Minimal prediction metadata saving now exists in `src/color_rough_ref_tool/core/
 It can save `project_output/metadata/predictions.json` with prediction image file names, paths, sizes, and modified times.
 Minimal hand reference metadata saving now exists in `src/color_rough_ref_tool/core/hand_reference_metadata.py`.
 It can save `project_output/metadata/hand_refs.json` with hand reference image file names, paths, sizes, and modified times.
+Minimal hand reference sheet export now exists in `src/color_rough_ref_tool/core/hand_reference_sheet.py`.
+It can arrange saved PNG hand reference images into a simple sheet at `project_output/sheets/hand_sheet_001.png`.
 
 Workflow placeholder handling now exists in `src/color_rough_ref_tool/integrations/comfyui/workflow_placeholders.py`.
 The default workflow file locations are:
@@ -122,7 +124,7 @@ The same module can now build minimal preview metadata for the selected input im
 It can also copy the selected color rough into the project output input folder as `input/color_rough.<extension>`.
 It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `webp`.
 
-No live ComfyUI connection check, generation completion waiting, sheet export, or save/export UI exists yet.
+No live ComfyUI connection check, generation completion waiting, or save/export UI exists yet.
 
 ---
 
@@ -155,15 +157,15 @@ No live ComfyUI connection check, generation completion waiting, sheet export, o
 
 ## Last Completed Task
 
-Phase 7.3:
-Added minimal `hand_refs.json` hand reference metadata saving.
+Phase 7.4:
+Added minimal simple hand reference sheet image export.
 
 ---
 
 ## Current Next Task
 
-Phase 7.4:
-Export simple hand reference sheet image.
+Phase 7.5:
+Add save/export confirmation UI.
 
 ---
 
