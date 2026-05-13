@@ -128,6 +128,7 @@ It also has a simple `Reopen project` button for reloading the current `Project 
 The minimal UI now shows a compact project summary with the current output folder, prediction count, selected candidate status, mask status, hand reference count, and exported sheet count.
 The minimal UI now has a `Check workflows` button that locally validates required workflow placeholders without connecting to ComfyUI.
 The workflow check now also warns when the prediction color rough image placeholder is on a node that does not appear to be connected to the rest of the ComfyUI API workflow.
+The workflow check now also warns when the hand inpainting selected candidate image or hand mask image placeholder is on a node that does not appear to be connected to the hand inpainting workflow.
 ComfyUI workflow requirements are now documented in `docs/COMFYUI_WORKFLOW_REQUIREMENTS.md`, including required placeholders and expected output folders.
 The prediction workflow requirements now document the minimum recommended img2img route and a ControlNet-style route so the color rough image is actually used by generation.
 Local AI setup guidance is now documented in `docs/LOCAL_AI_SETUP_GUIDE.md`.
@@ -174,15 +175,15 @@ It still does not wait for generation completion or automatically copy ComfyUI o
 
 ## Last Completed Task
 
-Phase 9.2:
-Documented the minimum recommended prediction workflow structure for img2img or ControlNet.
+Phase 9.3:
+Added a local workflow check that warns when hand inpainting selected candidate or mask input nodes are not connected to another node.
 
 ---
 
 ## Current Next Task
 
-Phase 9.3:
-Verify that the hand inpainting workflow actually uses both selected candidate and mask image.
+Phase 9.4:
+Add beginner-friendly workflow mismatch messages if ComfyUI accepts a prompt but the workflow ignores the image input.
 
 ---
 

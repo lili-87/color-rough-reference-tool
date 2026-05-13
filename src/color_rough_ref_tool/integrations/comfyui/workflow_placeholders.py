@@ -114,28 +114,57 @@ def validate_prediction_workflow_uses_color_rough_input(
 ) -> WorkflowInputUsageValidationResult:
     """Check that the color rough placeholder appears on a connected workflow node."""
 
-    placeholder_node_ids = _node_ids_containing_any_placeholder(
+    return _validate_placeholder_nodes_are_referenced(
         workflow,
-        COLOR_ROUGH_PLACEHOLDERS,
+        (
+            (
+                "color rough image node may not be connected to the generation flow",
+                COLOR_ROUGH_PLACEHOLDERS,
+            ),
+        ),
     )
-    if not placeholder_node_ids:
-        return WorkflowInputUsageValidationResult(warnings=())
 
+
+def validate_hand_inpainting_workflow_uses_inputs(
+    workflow: dict[str, Any],
+) -> WorkflowInputUsageValidationResult:
+    """Check that selected candidate and hand mask placeholders are connected."""
+
+    return _validate_placeholder_nodes_are_referenced(
+        workflow,
+        (
+            (
+                "selected candidate image node may not be connected to the hand inpainting flow",
+                SELECTED_CANDIDATE_PLACEHOLDERS,
+            ),
+            (
+                "hand mask image node may not be connected to the hand inpainting flow",
+                HAND_MASK_PLACEHOLDERS,
+            ),
+        ),
+    )
+
+
+def _validate_placeholder_nodes_are_referenced(
+    workflow: dict[str, Any],
+    groups: tuple[tuple[str, tuple[str, ...]], ...],
+) -> WorkflowInputUsageValidationResult:
     referenced_node_ids = _referenced_node_ids(workflow)
-    unused_node_ids = tuple(
-        node_id
-        for node_id in placeholder_node_ids
-        if node_id not in referenced_node_ids
-    )
-    if not unused_node_ids:
-        return WorkflowInputUsageValidationResult(warnings=())
+    warnings: list[str] = []
+    for warning_label, placeholders in groups:
+        placeholder_node_ids = _node_ids_containing_any_placeholder(workflow, placeholders)
+        if not placeholder_node_ids:
+            continue
 
-    return WorkflowInputUsageValidationResult(
-        warnings=(
-            "color rough image node may not be connected to the generation flow "
-            f"(node id: {', '.join(unused_node_ids)})",
+        unused_node_ids = tuple(
+            node_id
+            for node_id in placeholder_node_ids
+            if node_id not in referenced_node_ids
         )
-    )
+        if unused_node_ids:
+            warnings.append(f"{warning_label} (node id: {', '.join(unused_node_ids)})")
+
+    return WorkflowInputUsageValidationResult(warnings=tuple(warnings))
 
 
 def _write_placeholder_if_missing(

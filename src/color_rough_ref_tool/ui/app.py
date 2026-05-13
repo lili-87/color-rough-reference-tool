@@ -53,6 +53,7 @@ from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
     trigger_hand_inpainting_workflow,
 )
 from color_rough_ref_tool.integrations.comfyui.workflow_placeholders import (
+    validate_hand_inpainting_workflow_uses_inputs,
     validate_hand_inpainting_workflow_placeholders,
     validate_prediction_workflow_uses_color_rough_input,
     validate_prediction_workflow_placeholders,
@@ -183,6 +184,7 @@ def format_workflow_validation_message(
     prediction_missing: tuple[str, ...],
     hand_inpainting_missing: tuple[str, ...],
     prediction_warnings: tuple[str, ...] = (),
+    hand_inpainting_warnings: tuple[str, ...] = (),
 ) -> str:
     """Return a short UI message for local workflow placeholder validation."""
 
@@ -193,9 +195,18 @@ def format_workflow_validation_message(
         messages.append(f"- Hand inpainting workflow missing: {', '.join(hand_inpainting_missing)}")
     if prediction_warnings:
         messages.extend(f"- Prediction workflow warning: {warning}" for warning in prediction_warnings)
+    if hand_inpainting_warnings:
+        messages.extend(
+            f"- Hand inpainting workflow warning: {warning}"
+            for warning in hand_inpainting_warnings
+        )
     if not messages:
-        return "Workflow placeholders and color rough input connection look OK."
-    if prediction_warnings and not prediction_missing and not hand_inpainting_missing:
+        return "Workflow placeholders and input connections look OK."
+    if (
+        (prediction_warnings or hand_inpainting_warnings)
+        and not prediction_missing
+        and not hand_inpainting_missing
+    ):
         return "Workflow placeholders exist, but please check this:\n" + "\n".join(messages)
     return "Please fix workflow placeholders:\n" + "\n".join(messages)
 
@@ -627,6 +638,7 @@ class ColorRoughReferenceApp:
                 prediction_workflow
             )
             hand_result = validate_hand_inpainting_workflow_placeholders(hand_workflow)
+            hand_usage_result = validate_hand_inpainting_workflow_uses_inputs(hand_workflow)
         except (FileNotFoundError, OSError, ValueError) as error:
             messagebox.showerror("Workflow check", format_error_message("check workflow placeholders", error))
             return
@@ -635,9 +647,15 @@ class ColorRoughReferenceApp:
             prediction_result.missing_requirements,
             hand_result.missing_requirements,
             prediction_usage_result.warnings,
+            hand_usage_result.warnings,
         )
         self.status_message.set(message.replace("\n", " "))
-        if prediction_result.ok and hand_result.ok and prediction_usage_result.ok:
+        if (
+            prediction_result.ok
+            and hand_result.ok
+            and prediction_usage_result.ok
+            and hand_usage_result.ok
+        ):
             messagebox.showinfo("Workflow check", message)
         elif prediction_result.ok and hand_result.ok:
             messagebox.showwarning("Workflow check", message)

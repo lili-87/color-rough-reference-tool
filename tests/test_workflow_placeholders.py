@@ -6,6 +6,7 @@ from color_rough_ref_tool.integrations.comfyui.workflow_placeholders import (
     HAND_INPAINTING_WORKFLOW_NAME,
     PREDICTION_WORKFLOW_NAME,
     prepare_workflow_placeholders,
+    validate_hand_inpainting_workflow_uses_inputs,
     validate_hand_inpainting_workflow_placeholders,
     validate_prediction_workflow_uses_color_rough_input,
     validate_prediction_workflow_placeholders,
@@ -135,6 +136,92 @@ class WorkflowPlaceholderTest(unittest.TestCase):
 
         self.assertFalse(result.ok)
         self.assertEqual(result.missing_requirements, ("hand mask image",))
+
+    def test_validate_hand_inpainting_workflow_uses_inputs_accepts_connected_nodes(self) -> None:
+        result = validate_hand_inpainting_workflow_uses_inputs(
+            {
+                "10": {
+                    "inputs": {
+                        "image": "{{SELECTED_CANDIDATE_IMAGE_PATH}}",
+                    },
+                    "class_type": "LoadImage",
+                },
+                "11": {
+                    "inputs": {
+                        "image": "{{HAND_MASK_IMAGE_PATH}}",
+                    },
+                    "class_type": "LoadImage",
+                },
+                "12": {
+                    "inputs": {
+                        "pixels": ["10", 0],
+                        "mask": ["11", 0],
+                    },
+                    "class_type": "VAEEncodeForInpaint",
+                },
+            }
+        )
+
+        self.assertTrue(result.ok)
+        self.assertEqual(result.warnings, ())
+
+    def test_validate_hand_inpainting_workflow_uses_inputs_warns_about_unconnected_selected_candidate(self) -> None:
+        result = validate_hand_inpainting_workflow_uses_inputs(
+            {
+                "10": {
+                    "inputs": {
+                        "image": "{{SELECTED_CANDIDATE_IMAGE_PATH}}",
+                    },
+                    "class_type": "LoadImage",
+                },
+                "11": {
+                    "inputs": {
+                        "image": "{{HAND_MASK_IMAGE_PATH}}",
+                    },
+                    "class_type": "LoadImage",
+                },
+                "12": {
+                    "inputs": {
+                        "mask": ["11", 0],
+                    },
+                    "class_type": "VAEEncodeForInpaint",
+                },
+            }
+        )
+
+        self.assertFalse(result.ok)
+        self.assertEqual(len(result.warnings), 1)
+        self.assertIn("selected candidate image node", result.warnings[0])
+        self.assertIn("node id: 10", result.warnings[0])
+
+    def test_validate_hand_inpainting_workflow_uses_inputs_warns_about_unconnected_mask(self) -> None:
+        result = validate_hand_inpainting_workflow_uses_inputs(
+            {
+                "10": {
+                    "inputs": {
+                        "image": "{{SELECTED_CANDIDATE_IMAGE_PATH}}",
+                    },
+                    "class_type": "LoadImage",
+                },
+                "11": {
+                    "inputs": {
+                        "image": "{{HAND_MASK_IMAGE_PATH}}",
+                    },
+                    "class_type": "LoadImage",
+                },
+                "12": {
+                    "inputs": {
+                        "pixels": ["10", 0],
+                    },
+                    "class_type": "VAEEncodeForInpaint",
+                },
+            }
+        )
+
+        self.assertFalse(result.ok)
+        self.assertEqual(len(result.warnings), 1)
+        self.assertIn("hand mask image node", result.warnings[0])
+        self.assertIn("node id: 11", result.warnings[0])
 
 
 if __name__ == "__main__":

@@ -81,7 +81,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 
 - [x] Phase 9.1: Verify the prediction workflow actually uses the color rough image input.
 - [x] Phase 9.2: Document the minimum recommended prediction workflow structure for img2img or ControlNet.
-- [ ] Phase 9.3: Verify the hand inpainting workflow actually uses both selected candidate and mask image.
+- [x] Phase 9.3: Verify the hand inpainting workflow actually uses both selected candidate and mask image.
 - [ ] Phase 9.4: Add beginner-friendly workflow mismatch messages if ComfyUI accepts a prompt but the workflow ignores the image input.
 
 ## Phase 10: Generation Completion and Output Pickup

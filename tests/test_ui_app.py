@@ -144,7 +144,7 @@ class UiAppTest(unittest.TestCase):
     def test_format_workflow_validation_message_reports_ok(self) -> None:
         self.assertEqual(
             format_workflow_validation_message((), ()),
-            "Workflow placeholders and color rough input connection look OK.",
+            "Workflow placeholders and input connections look OK.",
         )
 
     def test_format_workflow_validation_message_reports_missing_items(self) -> None:
@@ -166,6 +166,17 @@ class UiAppTest(unittest.TestCase):
 
         self.assertIn("Workflow placeholders exist, but please check this:", message)
         self.assertIn("Prediction workflow warning:", message)
+
+    def test_format_workflow_validation_message_reports_hand_warning(self) -> None:
+        message = format_workflow_validation_message(
+            (),
+            (),
+            (),
+            ("hand mask image node may not be connected",),
+        )
+
+        self.assertIn("Workflow placeholders exist, but please check this:", message)
+        self.assertIn("Hand inpainting workflow warning:", message)
 
     def test_format_prediction_output_count_reports_count(self) -> None:
         output = PredictionOutputImage(
