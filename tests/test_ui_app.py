@@ -19,6 +19,7 @@ from color_rough_ref_tool.ui.app import (
     format_configuration_message,
     format_error_message,
     format_exported_hand_reference_sheet_message,
+    format_hand_reference_generation_guard_message,
     format_hand_reference_generation_waiting_dialog,
     format_hand_reference_generation_waiting_status,
     format_hand_reference_manual_load_status,
@@ -375,6 +376,35 @@ class UiAppTest(unittest.TestCase):
         self.assertEqual(
             format_hand_reference_prompt_queued_message(result),
             "Queued hand reference workflow: hand-001",
+        )
+
+    def test_format_hand_reference_generation_guard_message_reports_missing_selected(self) -> None:
+        message = format_hand_reference_generation_guard_message(
+            missing_selected_candidate=True,
+            missing_hand_mask=False,
+        )
+
+        self.assertIn("Hand reference generation is not ready yet.", message)
+        self.assertIn("Save selected", message)
+        self.assertNotIn("Save mask", message)
+
+    def test_format_hand_reference_generation_guard_message_reports_missing_mask(self) -> None:
+        message = format_hand_reference_generation_guard_message(
+            missing_selected_candidate=False,
+            missing_hand_mask=True,
+        )
+
+        self.assertIn("Load selected for mask", message)
+        self.assertIn("Save mask", message)
+        self.assertIn("1. Press Load selected for mask", message)
+
+    def test_format_hand_reference_generation_guard_message_reports_ready(self) -> None:
+        self.assertEqual(
+            format_hand_reference_generation_guard_message(
+                missing_selected_candidate=False,
+                missing_hand_mask=False,
+            ),
+            "Hand reference generation is ready.",
         )
 
     def test_format_hand_reference_generation_waiting_status_explains_next_manual_step(self) -> None:

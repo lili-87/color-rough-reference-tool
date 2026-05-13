@@ -343,6 +343,27 @@ def format_hand_reference_prompt_queued_message(result: ComfyUIPromptResult) -> 
     return f"Queued hand reference workflow: {result.prompt_id}"
 
 
+def format_hand_reference_generation_guard_message(
+    missing_selected_candidate: bool,
+    missing_hand_mask: bool,
+) -> str:
+    """Return a simple message when hand reference generation is not ready."""
+
+    steps: list[str] = []
+    if missing_selected_candidate:
+        steps.append("Load prediction images, choose one candidate, then press Save selected.")
+    if missing_hand_mask:
+        steps.append("Press Load selected for mask, draw the hand area, then press Save mask.")
+    if not steps:
+        return "Hand reference generation is ready."
+    numbered_steps = "\n".join(f"{index}. {step}" for index, step in enumerate(steps, start=1))
+    return (
+        "Hand reference generation is not ready yet.\n\n"
+        "Before pressing Regenerate hand ref:\n"
+        + numbered_steps
+    )
+
+
 def format_hand_reference_generation_waiting_status(
     result: ComfyUIPromptResult,
     prompt_metadata_path: Path,
@@ -1095,9 +1116,35 @@ class ColorRoughReferenceApp:
         try:
             settings = self._settings_from_form()
             output_folders = prepare_project_output(settings.default_output_dir)
+        except (OSError, ValueError) as error:
+            messagebox.showerror("Hand reference generation", format_error_message("queue hand reference generation", error))
+            return
+
+        try:
             metadata = load_selected_candidate_metadata(output_folders.metadata)
-            selected_path = Path(metadata.saved_path)
-            mask_path = hand_mask_path_for_candidate(output_folders.masks, metadata.file_name)
+        except (FileNotFoundError, OSError, ValueError):
+            message = format_hand_reference_generation_guard_message(
+                missing_selected_candidate=True,
+                missing_hand_mask=False,
+            )
+            self.status_message.set(message.replace("\n", " "))
+            messagebox.showinfo("Hand reference generation", message)
+            return
+
+        selected_path = Path(metadata.saved_path)
+        mask_path = hand_mask_path_for_candidate(output_folders.masks, metadata.file_name)
+        missing_selected_candidate = not selected_path.exists() or not selected_path.is_file()
+        missing_hand_mask = not mask_path.exists() or not mask_path.is_file()
+        if missing_selected_candidate or missing_hand_mask:
+            message = format_hand_reference_generation_guard_message(
+                missing_selected_candidate=missing_selected_candidate,
+                missing_hand_mask=missing_hand_mask,
+            )
+            self.status_message.set(message.replace("\n", " "))
+            messagebox.showinfo("Hand reference generation", message)
+            return
+
+        try:
             result = trigger_hand_inpainting_workflow(
                 settings,
                 selected_candidate_path=selected_path,
@@ -1108,7 +1155,7 @@ class ColorRoughReferenceApp:
                 result.prompt_id,
                 output_folders.metadata,
             )
-        except (ConnectionError, FileNotFoundError, OSError, ValueError) as error:
+        except (ConnectionError, OSError, ValueError) as error:
             messagebox.showerror("Hand reference generation", format_error_message("queue hand reference generation", error))
             return
 

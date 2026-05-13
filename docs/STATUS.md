@@ -132,6 +132,7 @@ The minimal UI can now show hand reference images from `project_output/hand_refs
 Images that Tkinter can preview are shown as small thumbnails; unsupported preview formats still appear by file name.
 The minimal UI can now refresh hand reference thumbnails from `project_output/hand_refs` after copied hand reference outputs are available.
 The minimal UI can now queue the hand inpainting workflow again from the saved selected candidate and saved hand mask.
+Before queueing hand reference generation, the UI now checks whether the selected candidate and hand mask are saved and tells the user which step to do next if either one is missing.
 After queueing a hand inpainting workflow, the minimal UI now saves the latest hand reference prompt ID to `project_output/metadata/latest_hand_reference_prompt.json`.
 After queueing hand reference generation, the minimal UI now explains that ComfyUI is generating, the prompt ID was saved for history checking, and the user should press Load hand refs after ComfyUI finishes.
 If hand reference images are not available during manual loading, the UI now explains that generation may still be running and the user can wait and press Load hand refs again.
@@ -191,15 +192,15 @@ It still does not wait for generation completion or automatically copy ComfyUI o
 
 ## Last Completed Task
 
-Phase 11.3:
-Added clearer beginner-friendly workflow mismatch messages when placeholders exist but image inputs may be disconnected.
+Phase 11.4:
+Added a beginner-friendly guard message before hand reference generation when the selected candidate or hand mask is missing.
 
 ---
 
 ## Current Next Task
 
-Phase 11.4:
-Add guard message before hand reference generation if selected candidate or mask is missing.
+Phase 11.5:
+Add a simple troubleshooting checklist to the local AI setup guide.
 
 ---
 
