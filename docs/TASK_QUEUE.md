@@ -94,7 +94,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 - [x] Phase 10.6: Store the latest hand reference prompt ID after queueing.
 - [x] Phase 10.7: Detect finished hand reference outputs from ComfyUI history.
 - [x] Phase 10.8: Copy finished hand reference images into `project_output/hand_refs/`.
-- [ ] Phase 10.9: Refresh hand reference thumbnails after copied outputs are available.
+- [x] Phase 10.9: Refresh hand reference thumbnails after copied outputs are available.
 
 ## Phase 11: Beginner-Friendly Generation Flow
 

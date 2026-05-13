@@ -279,6 +279,16 @@ def format_hand_reference_output_result(result: HandReferenceOutputReadResult) -
     return " ".join(result.messages)
 
 
+def format_hand_reference_thumbnail_refresh_result(result: HandReferenceOutputReadResult) -> str:
+    """Return a short status message after refreshing hand reference thumbnails."""
+
+    if not result.ok:
+        return format_hand_reference_output_result(result)
+    if len(result.images) == 1:
+        return "Hand reference thumbnails refreshed: 1 image."
+    return f"Hand reference thumbnails refreshed: {len(result.images)} images."
+
+
 def format_hand_reference_prompt_queued_message(result: ComfyUIPromptResult) -> str:
     """Return a short status message after queuing a hand reference prompt."""
 
@@ -546,8 +556,13 @@ class ColorRoughReferenceApp:
             text="Regenerate hand ref",
             command=self.regenerate_hand_reference,
         ).grid(row=0, column=1, sticky="w", pady=(0, 8))
+        ttk.Button(
+            hand_reference_frame,
+            text="Load hand refs",
+            command=self.load_hand_reference_outputs,
+        ).grid(row=0, column=2, sticky="w", padx=(8, 0), pady=(0, 8))
         self.hand_reference_grid = ttk.Frame(hand_reference_frame)
-        self.hand_reference_grid.grid(row=1, column=0, columnspan=2, sticky="nw")
+        self.hand_reference_grid.grid(row=1, column=0, columnspan=3, sticky="nw")
         ttk.Label(
             self.hand_reference_grid,
             text="No hand reference images loaded",
@@ -807,17 +822,23 @@ class ColorRoughReferenceApp:
             ).grid(row=3, column=0, pady=(6, 0))
 
     def load_hand_reference_outputs(self) -> None:
+        """Reload hand reference images and refresh their thumbnails in the UI."""
+
         try:
             settings = self._settings_from_form()
-            output_folders = prepare_project_output(settings.default_output_dir)
-            result = read_hand_reference_outputs_safely(output_folders.hand_refs)
+            result = self._refresh_hand_reference_thumbnails(settings)
         except ValueError as error:
             self.status_message.set(format_error_message("load hand reference outputs", error).replace("\n", " "))
             return
 
+        self.status_message.set(format_hand_reference_thumbnail_refresh_result(result))
+
+    def _refresh_hand_reference_thumbnails(self, settings: AppSettings) -> HandReferenceOutputReadResult:
+        output_folders = prepare_project_output(settings.default_output_dir)
+        result = read_hand_reference_outputs_safely(output_folders.hand_refs)
         self._render_hand_reference_outputs(result.images)
         self.refresh_project_summary()
-        self.status_message.set(format_hand_reference_output_result(result))
+        return result
 
     def reopen_project_outputs(self) -> None:
         """Reload saved outputs from the current project output folder."""

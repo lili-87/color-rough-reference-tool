@@ -127,6 +127,7 @@ It can now fetch ComfyUI history once for the latest saved hand reference prompt
 It can now copy completed hand reference images reported by ComfyUI history from a ComfyUI output folder into `project_output/hand_refs`.
 The minimal UI can now show hand reference images from `project_output/hand_refs` in a simple thumbnail area.
 Images that Tkinter can preview are shown as small thumbnails; unsupported preview formats still appear by file name.
+The minimal UI can now refresh hand reference thumbnails from `project_output/hand_refs` after copied hand reference outputs are available.
 The minimal UI can now queue the hand inpainting workflow again from the saved selected candidate and saved hand mask.
 After queueing a hand inpainting workflow, the minimal UI now saves the latest hand reference prompt ID to `project_output/metadata/latest_hand_reference_prompt.json`.
 Missing, empty, or invalid hand reference output folders are now handled with simple status messages instead of crashing the UI.
@@ -184,15 +185,15 @@ It still does not wait for generation completion or automatically copy ComfyUI o
 
 ## Last Completed Task
 
-Phase 10.8:
-Added minimal copying for completed hand reference images reported by ComfyUI history into `project_output/hand_refs/`.
+Phase 10.9:
+Added minimal UI refresh handling for hand reference thumbnails after copied outputs are available.
 
 ---
 
 ## Current Next Task
 
-Phase 10.9:
-Refresh hand reference thumbnails after copied outputs are available.
+Phase 11.1:
+Add simple waiting/status messages for queued generation.
 
 ---
 

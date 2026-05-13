@@ -22,6 +22,7 @@ from color_rough_ref_tool.ui.app import (
     format_hand_reference_output_count,
     format_hand_reference_output_result,
     format_hand_reference_prompt_queued_message,
+    format_hand_reference_thumbnail_refresh_result,
     format_thumbnail_file_label,
     format_thumbnail_file_size,
     format_prediction_output_count,
@@ -283,6 +284,32 @@ class UiAppTest(unittest.TestCase):
 
         self.assertEqual(
             format_hand_reference_output_result(result),
+            "No hand reference images were found in: project_output/hand_refs",
+        )
+
+    def test_format_hand_reference_thumbnail_refresh_result_reports_refreshed_count(self) -> None:
+        output = HandReferenceOutputImage(
+            path=Path("hand_refs/pred_002_hand_ref_001.png"),
+            file_name="pred_002_hand_ref_001.png",
+            file_size_bytes=10,
+            modified_time=1.0,
+        )
+
+        self.assertEqual(
+            format_hand_reference_thumbnail_refresh_result(
+                HandReferenceOutputReadResult(images=(output,), messages=())
+            ),
+            "Hand reference thumbnails refreshed: 1 image.",
+        )
+
+    def test_format_hand_reference_thumbnail_refresh_result_reports_read_messages(self) -> None:
+        result = HandReferenceOutputReadResult(
+            images=(),
+            messages=("No hand reference images were found in: project_output/hand_refs",),
+        )
+
+        self.assertEqual(
+            format_hand_reference_thumbnail_refresh_result(result),
             "No hand reference images were found in: project_output/hand_refs",
         )
 
