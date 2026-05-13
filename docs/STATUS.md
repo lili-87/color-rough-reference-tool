@@ -164,6 +164,39 @@ It still does not wait for generation completion or automatically copy ComfyUI o
 
 ---
 
+## Phase 12.1 Validation Attempt
+
+Date: 2026-05-13
+
+Goal:
+Run one complete manual prediction test from one color rough image through external ComfyUI.
+
+Result:
+The test was started but did not pass as a valid color-rough-to-prediction test.
+
+What was confirmed:
+
+- External ComfyUI was reachable at `http://127.0.0.1:8188`.
+- ComfyUI `/system_stats` returned HTTP 200.
+- `workflows/prediction_workflow.json` exists.
+- The prediction workflow contains the required color rough placeholder.
+- Existing prediction output images are present in `project_output/predictions/`.
+
+Problem found:
+
+- `project_output/input/` did not contain a saved color rough image for the validation run.
+- The current prediction workflow has `{{COLOR_ROUGH_IMAGE_PATH}}` on a `LoadImage` node, but that node is not connected to the generation flow.
+- The workflow validation reported: `ComfyUI may accept the prompt, but the color rough image may be ignored because its node is not connected to the generation flow (node id: 8)`.
+- Because of this, queueing the current workflow would not prove that prediction generation uses the selected color rough.
+
+Decision:
+Do not mark Phase 12.1 as complete yet. Fix or re-export the prediction workflow so the color rough image is connected to the actual img2img or ControlNet route, then run Phase 12.1 again with a saved color rough image.
+
+Additional check:
+An automated test command was attempted for workflow/prediction modules, but it failed in the local temp test folder with Windows `PermissionError` on `C:\RuougRef2\tmp\tests`. This was not a product-code failure.
+
+---
+
 ## What Should Exist in v0.1
 
 - Color rough loading
@@ -201,7 +234,7 @@ Added a simple beginner-friendly troubleshooting checklist to the local AI setup
 ## Current Next Task
 
 Phase 12.1:
-Run one complete manual prediction test with external ComfyUI.
+Run one complete manual prediction test with external ComfyUI after the prediction workflow is fixed to actually use the color rough image.
 
 ---
 

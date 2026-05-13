@@ -34,17 +34,6 @@
       "title": "CLIPテキストエンコード（プロンプト）"
     }
   },
-  "4": {
-    "inputs": {
-      "width": 512,
-      "height": 512,
-      "batch_size": 1
-    },
-    "class_type": "EmptyLatentImage",
-    "_meta": {
-      "title": "空の潜在画像"
-    }
-  },
   "5": {
     "inputs": {
       "seed": 75226856723040,
@@ -52,7 +41,7 @@
       "cfg": 5,
       "sampler_name": "euler",
       "scheduler": "normal",
-      "denoise": 1,
+      "denoise": 0.55,
       "model": [
         "1",
         0
@@ -66,7 +55,7 @@
         0
       ],
       "latent_image": [
-        "4",
+        "17",
         0
       ]
     },
@@ -104,16 +93,7 @@
       "title": "画像を保存"
     }
   },
-  "8": {
-    "inputs": {
-      "image": "スクリーンショット 2025-05-13 124837.png"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "画像を読み込む"
-    }
-  },
-  "10": {
+  "14": {
     "inputs": {
       "image": "{{SELECTED_CANDIDATE_IMAGE_PATH}}"
     },
@@ -122,13 +102,34 @@
       "title": "画像を読み込む"
     }
   },
-  "11": {
+  "15": {
     "inputs": {
       "image": "{{HAND_MASK_IMAGE_PATH}}"
     },
     "class_type": "LoadImage",
     "_meta": {
       "title": "画像を読み込む"
+    }
+  },
+  "17": {
+    "inputs": {
+      "grow_mask_by": 6,
+      "pixels": [
+        "14",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ],
+      "mask": [
+        "15",
+        1
+      ]
+    },
+    "class_type": "VAEEncodeForInpaint",
+    "_meta": {
+      "title": "VAEエンコード（インペイント用）"
     }
   }
 }

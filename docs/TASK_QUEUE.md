@@ -107,6 +107,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 ## Phase 12: v0.1 Validation
 
 - [ ] Phase 12.1: Run one complete manual prediction test with external ComfyUI.
+  - 2026-05-13 attempt: ComfyUI endpoint was reachable, but the current prediction workflow could not pass validation because the color rough Load Image placeholder node was not connected to the generation flow.
 - [ ] Phase 12.2: Run one complete manual hand reference test with external ComfyUI.
 - [ ] Phase 12.3: Confirm sheet export and metadata after a full workflow.
 - [ ] Phase 12.4: Update docs with final v0.1 known issues and usage steps.
