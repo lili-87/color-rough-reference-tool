@@ -7,10 +7,12 @@ import json
 from pathlib import Path
 import shutil
 from typing import Any, Callable
-from urllib.request import urlopen
+from urllib.error import URLError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 from color_rough_ref_tool.core.prompt_metadata import load_latest_hand_reference_prompt_metadata
-from color_rough_ref_tool.core.settings import AppSettings
+from color_rough_ref_tool.core.settings import AppSettings, normalize_comfyui_endpoint
 from color_rough_ref_tool.integrations.comfyui.prediction import (
     ComfyUIHistoryResult,
     ComfyUIPromptResult,
@@ -20,6 +22,7 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
 
 
 HAND_REFERENCE_IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".webp"})
+VIEW_ENDPOINT_PATH = "/view"
 SELECTED_CANDIDATE_IMAGE_PATH_PLACEHOLDER = "{{SELECTED_CANDIDATE_IMAGE_PATH}}"
 SELECTED_CANDIDATE_IMAGE_PLACEHOLDER = "{{SELECTED_CANDIDATE_IMAGE}}"
 HAND_MASK_IMAGE_PATH_PLACEHOLDER = "{{HAND_MASK_IMAGE_PATH}}"
@@ -79,6 +82,14 @@ class CopiedHandReferenceHistoryImage:
     """A ComfyUI history image copied into the project hand_refs folder."""
 
     source_path: Path
+    saved_path: Path
+    file_name: str
+
+
+@dataclass(frozen=True, slots=True)
+class DownloadedHandReferenceHistoryImage:
+    """A ComfyUI history image downloaded into the project hand_refs folder."""
+
     saved_path: Path
     file_name: str
 
@@ -192,6 +203,50 @@ def copy_finished_hand_reference_images(
         )
 
     return tuple(copied)
+
+
+def download_finished_hand_reference_images(
+    inspection: HandReferenceHistoryInspection,
+    *,
+    endpoint: str,
+    hand_refs_dir: Path | str,
+    timeout_seconds: float = 30,
+    opener: Callable[..., Any] = urlopen,
+) -> tuple[DownloadedHandReferenceHistoryImage, ...]:
+    """Download completed hand reference images reported by ComfyUI history."""
+
+    if not inspection.completed:
+        return ()
+
+    destination_dir = Path(hand_refs_dir)
+    destination_dir.mkdir(parents=True, exist_ok=True)
+
+    downloaded: list[DownloadedHandReferenceHistoryImage] = []
+    for image in inspection.images:
+        _validate_history_image_path_parts(image)
+        request = Request(
+            _view_url(endpoint, image),
+            method="GET",
+        )
+        try:
+            with opener(request, timeout=timeout_seconds) as response:
+                image_bytes = response.read()
+        except URLError as error:
+            raise ConnectionError(f"Could not fetch ComfyUI hand reference image: {image.file_name}") from error
+
+        if not image_bytes:
+            raise ValueError(f"ComfyUI hand reference image was empty: {image.file_name}")
+
+        saved_path = destination_dir / image.file_name
+        saved_path.write_bytes(image_bytes)
+        downloaded.append(
+            DownloadedHandReferenceHistoryImage(
+                saved_path=saved_path,
+                file_name=image.file_name,
+            )
+        )
+
+    return tuple(downloaded)
 
 
 def load_hand_inpainting_workflow(workflow_path: Path | str) -> dict[str, Any]:
@@ -365,6 +420,22 @@ def _history_image_source_path(
     output_dir: Path,
     image: HandReferenceHistoryImage,
 ) -> Path:
+    _validate_history_image_path_parts(image)
+    return output_dir / (Path(image.subfolder) if image.subfolder else Path()) / image.file_name
+
+
+def _view_url(endpoint: str, image: HandReferenceHistoryImage) -> str:
+    query = urlencode(
+        {
+            "filename": image.file_name,
+            "subfolder": image.subfolder,
+            "type": image.image_type or "output",
+        }
+    )
+    return f"{normalize_comfyui_endpoint(endpoint)}{VIEW_ENDPOINT_PATH}?{query}"
+
+
+def _validate_history_image_path_parts(image: HandReferenceHistoryImage) -> None:
     file_name_path = Path(image.file_name)
     if file_name_path.name != image.file_name:
         raise ValueError(f"ComfyUI history image filename must not contain folders: {image.file_name}")
@@ -372,5 +443,3 @@ def _history_image_source_path(
     subfolder = Path(image.subfolder) if image.subfolder else Path()
     if subfolder.is_absolute() or ".." in subfolder.parts:
         raise ValueError(f"ComfyUI history image subfolder must stay inside the output folder: {image.subfolder}")
-
-    return output_dir / subfolder / image.file_name

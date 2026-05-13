@@ -317,6 +317,38 @@ Verification:
 
 ---
 
+## Phase 13.2 Hand Reference Output Pickup
+
+Date: 2026-05-13
+
+Goal:
+Make `Load hand refs` import finished hand reference images from the latest saved hand reference prompt ID, then refresh the thumbnails.
+
+Result:
+Completed.
+
+What changed:
+
+- The hand inpainting integration can now download completed hand reference images reported by ComfyUI history through the existing ComfyUI endpoint's image view route.
+- `Load hand refs` now checks `project_output/metadata/latest_hand_reference_prompt.json` once when pressed.
+- If the latest hand reference prompt is complete, reported images are saved into `project_output/hand_refs/`.
+- After the import attempt, the UI refreshes hand reference thumbnails from `project_output/hand_refs/`.
+- If no latest hand reference prompt ID exists, `Load hand refs` still behaves like a normal local folder refresh.
+- If ComfyUI history says the prompt is still running, the status message tells the user to wait and press `Load hand refs` again.
+
+Scope notes:
+
+- No automatic wait loop was added.
+- No cloud/API integration was added.
+- No ComfyUI, model, or checkpoint files were bundled.
+- This is still a user-triggered manual Load action.
+
+Verification:
+
+- `python -m unittest tests.test_ui_app tests.test_comfyui_hand_inpainting`
+
+---
+
 ## What Should Exist in v0.1
 
 - Color rough loading
@@ -346,15 +378,15 @@ Verification:
 
 ## Last Completed Task
 
-Phase 13.1:
-Implemented prediction output pickup from the latest saved prediction prompt ID when pressing `Load predictions`.
+Phase 13.2:
+Implemented hand reference output pickup from the latest saved hand reference prompt ID when pressing `Load hand refs`.
 
 ---
 
 ## Current Next Task
 
-Phase 13.2:
-Make Load hand refs import finished images from the latest saved hand reference prompt ID, then refresh thumbnails.
+Phase 13.3:
+Add simple UI messages for pending generation, copied images, missing ComfyUI output files, and history lookup failures.
 
 ---
 

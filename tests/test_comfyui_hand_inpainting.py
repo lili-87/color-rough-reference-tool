@@ -11,6 +11,7 @@ from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
     HandReferenceHistoryImage,
     HandReferenceHistoryInspection,
     copy_finished_hand_reference_images,
+    download_finished_hand_reference_images,
     fetch_latest_hand_reference_history,
     inject_hand_inpainting_paths,
     inspect_hand_reference_history,
@@ -22,7 +23,7 @@ from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
 from color_rough_ref_tool.integrations.comfyui.prediction import ComfyUIHistoryResult
 
 
-TEST_TEMP_DIR = Path("tmp") / "tests"
+TEST_TEMP_DIR = Path("tmp") / "tests_hand_inpainting"
 
 
 class FakeResponse:
@@ -37,6 +38,20 @@ class FakeResponse:
 
     def read(self) -> bytes:
         return json.dumps(self.payload).encode("utf-8")
+
+
+class FakeBytesResponse:
+    def __init__(self, payload: bytes) -> None:
+        self.payload = payload
+
+    def __enter__(self) -> "FakeBytesResponse":
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        return None
+
+    def read(self) -> bytes:
+        return self.payload
 
 
 class ComfyUIHandInpaintingTest(unittest.TestCase):
@@ -282,6 +297,73 @@ class ComfyUIHandInpaintingTest(unittest.TestCase):
                     comfyui_output_dir=comfyui_output_dir,
                     hand_refs_dir=hand_refs_dir,
                 )
+
+    def test_download_finished_hand_reference_images_fetches_view_images(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            hand_refs_dir = Path(temp_dir) / "project_output" / "hand_refs"
+            captured: dict[str, object] = {}
+            inspection = HandReferenceHistoryInspection(
+                prompt_id="hand-010",
+                completed=True,
+                images=(
+                    HandReferenceHistoryImage(
+                        file_name="ComfyUI_hand_00005_.png",
+                        subfolder="roughref hand",
+                        image_type="output",
+                    ),
+                ),
+            )
+
+            def opener(request: object, timeout: float) -> FakeBytesResponse:
+                captured["url"] = request.full_url
+                captured["timeout"] = timeout
+                captured["method"] = request.get_method()
+                return FakeBytesResponse(b"downloaded hand reference bytes")
+
+            downloaded = download_finished_hand_reference_images(
+                inspection,
+                endpoint="http://127.0.0.1:8188/",
+                hand_refs_dir=hand_refs_dir,
+                timeout_seconds=9,
+                opener=opener,
+            )
+
+            self.assertEqual(len(downloaded), 1)
+            self.assertEqual(downloaded[0].saved_path, hand_refs_dir / "ComfyUI_hand_00005_.png")
+            self.assertEqual(downloaded[0].saved_path.read_bytes(), b"downloaded hand reference bytes")
+        self.assertEqual(
+            captured["url"],
+            "http://127.0.0.1:8188/view?filename=ComfyUI_hand_00005_.png&subfolder=roughref+hand&type=output",
+        )
+        self.assertEqual(captured["timeout"], 9)
+        self.assertEqual(captured["method"], "GET")
+
+    def test_download_finished_hand_reference_images_skips_pending_history(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            hand_refs_dir = Path(temp_dir) / "project_output" / "hand_refs"
+            inspection = HandReferenceHistoryInspection(
+                prompt_id="hand-011",
+                completed=False,
+                images=(
+                    HandReferenceHistoryImage(
+                        file_name="ComfyUI_hand_00006_.png",
+                        subfolder="",
+                        image_type="output",
+                    ),
+                ),
+            )
+
+            downloaded = download_finished_hand_reference_images(
+                inspection,
+                endpoint="http://127.0.0.1:8188",
+                hand_refs_dir=hand_refs_dir,
+                opener=lambda request, timeout: FakeBytesResponse(b"unused"),
+            )
+
+        self.assertEqual(downloaded, ())
+        self.assertFalse(hand_refs_dir.exists())
 
     def test_inject_hand_inpainting_paths_replaces_nested_placeholders(self) -> None:
         TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)

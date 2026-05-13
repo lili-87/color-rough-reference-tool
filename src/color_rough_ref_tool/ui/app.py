@@ -55,6 +55,9 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
 from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
     HandReferenceOutputImage,
     HandReferenceOutputReadResult,
+    download_finished_hand_reference_images,
+    fetch_latest_hand_reference_history,
+    inspect_hand_reference_history,
     load_hand_inpainting_workflow,
     read_hand_reference_outputs_safely,
     trigger_hand_inpainting_workflow,
@@ -433,6 +436,34 @@ def format_hand_reference_manual_load_status(result: HandReferenceOutputReadResu
     return (
         f"{format_hand_reference_output_result(result)} "
         "If ComfyUI is still generating, wait a little and press Load hand refs again."
+    )
+
+
+def format_hand_reference_history_import_status(
+    *,
+    history_checked: bool,
+    history_completed: bool,
+    imported_count: int,
+    refresh_result: HandReferenceOutputReadResult,
+) -> str:
+    """Return a Load hand refs status after checking ComfyUI history once."""
+
+    refresh_status = format_hand_reference_manual_load_status(refresh_result)
+    if not history_checked:
+        return refresh_status
+    if not history_completed:
+        return (
+            "ComfyUI history says the latest hand reference generation is not finished yet. "
+            "Wait until ComfyUI finishes, then press Load hand refs again. "
+            f"{refresh_status}"
+        )
+    if imported_count == 1:
+        return f"Imported 1 hand reference image from ComfyUI history. {refresh_status}"
+    if imported_count > 1:
+        return f"Imported {imported_count} hand reference images from ComfyUI history. {refresh_status}"
+    return (
+        "ComfyUI history says the latest hand reference generation is finished, but it did not report any hand reference images to import. "
+        f"{refresh_status}"
     )
 
 
@@ -1000,15 +1031,48 @@ class ColorRoughReferenceApp:
 
         try:
             settings = self._settings_from_form()
+            output_folders = prepare_project_output(settings.default_output_dir)
+            history_checked, history_completed, imported_count = self._import_latest_hand_reference_history_outputs(
+                settings,
+                output_folders.metadata,
+                output_folders.hand_refs,
+            )
             result = self._refresh_hand_reference_thumbnails(settings)
-        except ValueError as error:
+        except (ConnectionError, FileNotFoundError, OSError, ValueError) as error:
             self.status_message.set(format_error_message("load hand reference outputs", error).replace("\n", " "))
             return
 
-        status = format_hand_reference_manual_load_status(result)
+        status = format_hand_reference_history_import_status(
+            history_checked=history_checked,
+            history_completed=history_completed,
+            imported_count=imported_count,
+            refresh_result=result,
+        )
         self.status_message.set(status)
         if not result.ok:
             messagebox.showinfo("Hand references", status)
+
+    def _import_latest_hand_reference_history_outputs(
+        self,
+        settings: AppSettings,
+        metadata_dir: Path,
+        hand_refs_dir: Path,
+    ) -> tuple[bool, bool, int]:
+        try:
+            history = fetch_latest_hand_reference_history(settings, metadata_dir)
+        except FileNotFoundError:
+            return False, False, 0
+
+        inspection = inspect_hand_reference_history(history)
+        if not inspection.completed:
+            return True, False, 0
+
+        imported = download_finished_hand_reference_images(
+            inspection,
+            endpoint=settings.comfyui_endpoint,
+            hand_refs_dir=hand_refs_dir,
+        )
+        return True, True, len(imported)
 
     def _refresh_hand_reference_thumbnails(self, settings: AppSettings) -> HandReferenceOutputReadResult:
         output_folders = prepare_project_output(settings.default_output_dir)

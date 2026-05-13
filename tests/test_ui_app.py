@@ -22,6 +22,7 @@ from color_rough_ref_tool.ui.app import (
     format_hand_reference_generation_guard_message,
     format_hand_reference_generation_waiting_dialog,
     format_hand_reference_generation_waiting_status,
+    format_hand_reference_history_import_status,
     format_hand_reference_manual_load_status,
     format_hand_reference_output_count,
     format_hand_reference_output_result,
@@ -482,6 +483,40 @@ class UiAppTest(unittest.TestCase):
 
         self.assertIn("No hand reference images were found", message)
         self.assertIn("wait a little and press Load hand refs again", message)
+
+    def test_format_hand_reference_history_import_status_reports_imported_images(self) -> None:
+        output = HandReferenceOutputImage(
+            path=Path("hand_refs/ComfyUI_hand_00001_.png"),
+            file_name="ComfyUI_hand_00001_.png",
+            file_size_bytes=20,
+            modified_time=2.0,
+        )
+
+        message = format_hand_reference_history_import_status(
+            history_checked=True,
+            history_completed=True,
+            imported_count=1,
+            refresh_result=HandReferenceOutputReadResult(images=(output,), messages=()),
+        )
+
+        self.assertIn("Imported 1 hand reference image from ComfyUI history", message)
+        self.assertIn("Hand reference thumbnails refreshed", message)
+
+    def test_format_hand_reference_history_import_status_reports_pending_history(self) -> None:
+        result = HandReferenceOutputReadResult(
+            images=(),
+            messages=("No hand reference images were found in: project_output/hand_refs",),
+        )
+
+        message = format_hand_reference_history_import_status(
+            history_checked=True,
+            history_completed=False,
+            imported_count=0,
+            refresh_result=result,
+        )
+
+        self.assertIn("not finished yet", message)
+        self.assertIn("press Load hand refs again", message)
 
     def test_format_exported_hand_reference_sheet_message_reports_saved_path(self) -> None:
         self.assertEqual(
