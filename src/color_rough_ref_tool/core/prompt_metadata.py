@@ -40,3 +40,28 @@ def save_latest_prediction_prompt_metadata(
         encoding="utf-8",
     )
     return metadata_path
+
+
+def load_latest_prediction_prompt_metadata(
+    metadata_dir: Path | str,
+) -> LatestPredictionPromptMetadata:
+    """Load the latest prediction prompt ID from project metadata."""
+
+    metadata_path = Path(metadata_dir) / LATEST_PREDICTION_PROMPT_FILENAME
+    if not metadata_path.exists():
+        raise FileNotFoundError(f"Latest prediction prompt metadata does not exist: {metadata_path}")
+    if not metadata_path.is_file():
+        raise ValueError(f"Latest prediction prompt metadata path must be a file: {metadata_path}")
+
+    try:
+        raw_metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise ValueError(f"Latest prediction prompt metadata is not valid JSON: {metadata_path}") from error
+
+    if not isinstance(raw_metadata, dict):
+        raise ValueError(f"Latest prediction prompt metadata must contain a JSON object: {metadata_path}")
+    prompt_id = raw_metadata.get("prompt_id")
+    if not isinstance(prompt_id, str):
+        raise ValueError("Latest prediction prompt metadata has an invalid field: prompt_id")
+
+    return build_latest_prediction_prompt_metadata(prompt_id)

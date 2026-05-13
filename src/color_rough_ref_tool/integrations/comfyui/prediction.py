@@ -7,13 +7,16 @@ import json
 from pathlib import Path
 import shutil
 from typing import Any, Callable
+from urllib.parse import quote
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
+from color_rough_ref_tool.core.prompt_metadata import load_latest_prediction_prompt_metadata
 from color_rough_ref_tool.core.settings import AppSettings, normalize_comfyui_endpoint
 
 
 PROMPT_ENDPOINT_PATH = "/prompt"
+HISTORY_ENDPOINT_PATH = "/history"
 PREDICTION_IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".webp"})
 COLOR_ROUGH_IMAGE_PATH_PLACEHOLDER = "{{COLOR_ROUGH_IMAGE_PATH}}"
 COLOR_ROUGH_IMAGE_PLACEHOLDER = "{{COLOR_ROUGH_IMAGE}}"
@@ -59,6 +62,14 @@ class SavedPredictionCandidate:
 
     source_path: Path
     saved_path: Path
+
+
+@dataclass(frozen=True, slots=True)
+class ComfyUIHistoryResult:
+    """Raw ComfyUI history response for one prompt ID."""
+
+    prompt_id: str
+    history: dict[str, Any]
 
 
 def trigger_prediction_workflow(
@@ -166,6 +177,59 @@ def read_prediction_outputs_safely(output_dir: Path | str) -> PredictionOutputRe
     return PredictionOutputReadResult(images=images, messages=())
 
 
+def fetch_comfyui_history(
+    *,
+    endpoint: str,
+    prompt_id: str,
+    timeout_seconds: float = 30,
+    opener: Callable[..., Any] = urlopen,
+) -> ComfyUIHistoryResult:
+    """Fetch ComfyUI history once for a prompt ID."""
+
+    normalized_prompt_id = prompt_id.strip()
+    if not normalized_prompt_id:
+        raise ValueError("ComfyUI history prompt ID must not be empty.")
+
+    request = Request(
+        _history_url(endpoint, normalized_prompt_id),
+        method="GET",
+    )
+
+    try:
+        with opener(request, timeout=timeout_seconds) as response:
+            response_data = json.loads(response.read().decode("utf-8"))
+    except URLError as error:
+        raise ConnectionError(f"Could not reach ComfyUI endpoint: {endpoint}") from error
+    except json.JSONDecodeError as error:
+        raise ValueError("ComfyUI history response was not valid JSON.") from error
+
+    if not isinstance(response_data, dict):
+        raise ValueError("ComfyUI history response must be a JSON object.")
+
+    return ComfyUIHistoryResult(
+        prompt_id=normalized_prompt_id,
+        history=response_data,
+    )
+
+
+def fetch_latest_prediction_history(
+    settings: AppSettings,
+    metadata_dir: Path | str,
+    *,
+    timeout_seconds: float = 30,
+    opener: Callable[..., Any] = urlopen,
+) -> ComfyUIHistoryResult:
+    """Fetch ComfyUI history once using the saved latest prediction prompt ID."""
+
+    metadata = load_latest_prediction_prompt_metadata(metadata_dir)
+    return fetch_comfyui_history(
+        endpoint=settings.comfyui_endpoint,
+        prompt_id=metadata.prompt_id,
+        timeout_seconds=timeout_seconds,
+        opener=opener,
+    )
+
+
 def save_selected_prediction_candidate(
     candidate_path: Path | str,
     selected_dir: Path | str,
@@ -229,6 +293,11 @@ def queue_comfyui_prompt(
 
 def _prompt_url(endpoint: str) -> str:
     return f"{normalize_comfyui_endpoint(endpoint)}{PROMPT_ENDPOINT_PATH}"
+
+
+def _history_url(endpoint: str, prompt_id: str) -> str:
+    escaped_prompt_id = quote(prompt_id, safe="")
+    return f"{normalize_comfyui_endpoint(endpoint)}{HISTORY_ENDPOINT_PATH}/{escaped_prompt_id}"
 
 
 def _replace_color_rough_placeholders(value: Any, image_path: str) -> Any:

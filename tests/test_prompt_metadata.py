@@ -6,6 +6,7 @@ import unittest
 from color_rough_ref_tool.core.prompt_metadata import (
     LATEST_PREDICTION_PROMPT_FILENAME,
     build_latest_prediction_prompt_metadata,
+    load_latest_prediction_prompt_metadata,
     save_latest_prediction_prompt_metadata,
 )
 
@@ -36,6 +37,20 @@ class PromptMetadataTest(unittest.TestCase):
 
         self.assertEqual(metadata_path, metadata_dir / LATEST_PREDICTION_PROMPT_FILENAME)
         self.assertEqual(metadata["prompt_id"], "prediction-001")
+
+    def test_load_latest_prediction_prompt_metadata_reads_saved_json(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            metadata_dir = Path(temp_dir) / "project_output" / "metadata"
+            save_latest_prediction_prompt_metadata("prediction-002", metadata_dir)
+
+            metadata = load_latest_prediction_prompt_metadata(metadata_dir)
+
+        self.assertEqual(metadata.prompt_id, "prediction-002")
+
+    def test_load_latest_prediction_prompt_metadata_rejects_missing_file(self) -> None:
+        with self.assertRaises(FileNotFoundError):
+            load_latest_prediction_prompt_metadata("missing_metadata")
 
 
 if __name__ == "__main__":

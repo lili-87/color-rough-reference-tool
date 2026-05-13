@@ -6,6 +6,8 @@ import unittest
 from color_rough_ref_tool.core.settings import AppSettings
 from color_rough_ref_tool.integrations.comfyui.prediction import (
     COLOR_ROUGH_IMAGE_PATH_PLACEHOLDER,
+    fetch_comfyui_history,
+    fetch_latest_prediction_history,
     inject_color_rough_path,
     load_prediction_workflow,
     queue_comfyui_prompt,
@@ -14,6 +16,7 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
     save_selected_prediction_candidate,
     trigger_prediction_workflow,
 )
+from color_rough_ref_tool.core.prompt_metadata import save_latest_prediction_prompt_metadata
 
 
 TEST_TEMP_DIR = Path("tmp") / "tests"
@@ -77,6 +80,58 @@ class ComfyUIPredictionTest(unittest.TestCase):
         self.assertEqual(captured["method"], "POST")
         self.assertEqual(captured["body"]["client_id"], "roughref-test")
         self.assertIn("prompt", captured["body"])
+
+    def test_fetch_comfyui_history_gets_prompt_history(self) -> None:
+        captured: dict[str, object] = {}
+
+        def opener(request: object, timeout: float) -> FakeResponse:
+            captured["url"] = request.full_url
+            captured["timeout"] = timeout
+            captured["method"] = request.get_method()
+            return FakeResponse({"prompt-001": {"outputs": {}}})
+
+        result = fetch_comfyui_history(
+            endpoint="http://127.0.0.1:8188/",
+            prompt_id=" prompt-001 ",
+            timeout_seconds=7,
+            opener=opener,
+        )
+
+        self.assertEqual(result.prompt_id, "prompt-001")
+        self.assertEqual(captured["url"], "http://127.0.0.1:8188/history/prompt-001")
+        self.assertEqual(captured["timeout"], 7)
+        self.assertEqual(captured["method"], "GET")
+        self.assertIn("prompt-001", result.history)
+
+    def test_fetch_latest_prediction_history_uses_saved_prompt_id(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            metadata_dir = Path(temp_dir) / "project_output" / "metadata"
+            save_latest_prediction_prompt_metadata("prediction-003", metadata_dir)
+            settings = AppSettings(comfyui_endpoint="http://localhost:8188")
+            captured: dict[str, object] = {}
+
+            def opener(request: object, timeout: float) -> FakeResponse:
+                captured["url"] = request.full_url
+                return FakeResponse({"prediction-003": {"status": {"completed": True}}})
+
+            result = fetch_latest_prediction_history(
+                settings,
+                metadata_dir,
+                opener=opener,
+            )
+
+        self.assertEqual(result.prompt_id, "prediction-003")
+        self.assertEqual(captured["url"], "http://localhost:8188/history/prediction-003")
+        self.assertIn("prediction-003", result.history)
+
+    def test_fetch_comfyui_history_rejects_empty_prompt_id(self) -> None:
+        with self.assertRaises(ValueError):
+            fetch_comfyui_history(
+                endpoint="http://127.0.0.1:8188",
+                prompt_id=" ",
+                opener=lambda request, timeout: FakeResponse({}),
+            )
 
     def test_inject_color_rough_path_replaces_nested_placeholders(self) -> None:
         TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
