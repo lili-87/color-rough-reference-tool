@@ -129,6 +129,7 @@ The minimal UI now shows a compact project summary with the current output folde
 The minimal UI now has a `Check workflows` button that locally validates required workflow placeholders without connecting to ComfyUI.
 The workflow check now also warns when the prediction color rough image placeholder is on a node that does not appear to be connected to the rest of the ComfyUI API workflow.
 The workflow check now also warns when the hand inpainting selected candidate image or hand mask image placeholder is on a node that does not appear to be connected to the hand inpainting workflow.
+Workflow mismatch warnings now explain that ComfyUI may accept the prompt even when disconnected image input nodes are ignored, and tell the user to reconnect nodes and export the API workflow again.
 ComfyUI workflow requirements are now documented in `docs/COMFYUI_WORKFLOW_REQUIREMENTS.md`, including required placeholders and expected output folders.
 The prediction workflow requirements now document the minimum recommended img2img route and a ControlNet-style route so the color rough image is actually used by generation.
 Local AI setup guidance is now documented in `docs/LOCAL_AI_SETUP_GUIDE.md`.
@@ -175,15 +176,15 @@ It still does not wait for generation completion or automatically copy ComfyUI o
 
 ## Last Completed Task
 
-Phase 9.3:
-Added a local workflow check that warns when hand inpainting selected candidate or mask input nodes are not connected to another node.
+Phase 9.4:
+Improved workflow mismatch messages for cases where ComfyUI accepts a prompt but disconnected image input nodes may be ignored.
 
 ---
 
 ## Current Next Task
 
-Phase 9.4:
-Add beginner-friendly workflow mismatch messages if ComfyUI accepts a prompt but the workflow ignores the image input.
+Phase 10.1:
+Store the latest prediction prompt ID after queueing.
 
 ---
 

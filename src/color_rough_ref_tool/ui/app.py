@@ -207,7 +207,11 @@ def format_workflow_validation_message(
         and not prediction_missing
         and not hand_inpainting_missing
     ):
-        return "Workflow placeholders exist, but please check this:\n" + "\n".join(messages)
+        return (
+            "Workflow placeholders exist, but the image inputs may be ignored.\n"
+            "Connect the listed image nodes in ComfyUI, export the API workflow again, then check again:\n"
+            + "\n".join(messages)
+        )
     return "Please fix workflow placeholders:\n" + "\n".join(messages)
 
 

@@ -118,7 +118,7 @@ def validate_prediction_workflow_uses_color_rough_input(
         workflow,
         (
             (
-                "color rough image node may not be connected to the generation flow",
+                "ComfyUI may accept the prompt, but the color rough image may be ignored because its node is not connected to the generation flow",
                 COLOR_ROUGH_PLACEHOLDERS,
             ),
         ),
@@ -134,11 +134,11 @@ def validate_hand_inpainting_workflow_uses_inputs(
         workflow,
         (
             (
-                "selected candidate image node may not be connected to the hand inpainting flow",
+                "ComfyUI may accept the prompt, but the selected candidate image may be ignored because its node is not connected to the hand inpainting flow",
                 SELECTED_CANDIDATE_PLACEHOLDERS,
             ),
             (
-                "hand mask image node may not be connected to the hand inpainting flow",
+                "ComfyUI may accept the prompt, but the hand mask image may be ignored because its node is not connected to the hand inpainting flow",
                 HAND_MASK_PLACEHOLDERS,
             ),
         ),

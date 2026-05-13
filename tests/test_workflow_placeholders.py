@@ -107,6 +107,7 @@ class WorkflowPlaceholderTest(unittest.TestCase):
         )
 
         self.assertFalse(result.ok)
+        self.assertIn("color rough image may be ignored", result.warnings[0])
         self.assertIn("node id: 8", result.warnings[0])
 
     def test_validate_hand_inpainting_workflow_placeholders_requires_selected_and_mask(self) -> None:
@@ -191,7 +192,7 @@ class WorkflowPlaceholderTest(unittest.TestCase):
 
         self.assertFalse(result.ok)
         self.assertEqual(len(result.warnings), 1)
-        self.assertIn("selected candidate image node", result.warnings[0])
+        self.assertIn("selected candidate image may be ignored", result.warnings[0])
         self.assertIn("node id: 10", result.warnings[0])
 
     def test_validate_hand_inpainting_workflow_uses_inputs_warns_about_unconnected_mask(self) -> None:
@@ -220,7 +221,7 @@ class WorkflowPlaceholderTest(unittest.TestCase):
 
         self.assertFalse(result.ok)
         self.assertEqual(len(result.warnings), 1)
-        self.assertIn("hand mask image node", result.warnings[0])
+        self.assertIn("hand mask image may be ignored", result.warnings[0])
         self.assertIn("node id: 11", result.warnings[0])
 
 

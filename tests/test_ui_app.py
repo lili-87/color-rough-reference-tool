@@ -164,7 +164,8 @@ class UiAppTest(unittest.TestCase):
             ("color rough image node may not be connected",),
         )
 
-        self.assertIn("Workflow placeholders exist, but please check this:", message)
+        self.assertIn("Workflow placeholders exist, but the image inputs may be ignored.", message)
+        self.assertIn("export the API workflow again", message)
         self.assertIn("Prediction workflow warning:", message)
 
     def test_format_workflow_validation_message_reports_hand_warning(self) -> None:
@@ -175,7 +176,8 @@ class UiAppTest(unittest.TestCase):
             ("hand mask image node may not be connected",),
         )
 
-        self.assertIn("Workflow placeholders exist, but please check this:", message)
+        self.assertIn("Workflow placeholders exist, but the image inputs may be ignored.", message)
+        self.assertIn("Connect the listed image nodes", message)
         self.assertIn("Hand inpainting workflow warning:", message)
 
     def test_format_prediction_output_count_reports_count(self) -> None:
