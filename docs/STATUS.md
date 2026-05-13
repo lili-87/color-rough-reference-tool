@@ -127,6 +127,7 @@ The minimal UI now reopens the configured project output on startup, reloads sav
 It also has a simple `Reopen project` button for reloading the current `Project output` folder after changing that path.
 The minimal UI now shows a compact project summary with the current output folder, prediction count, selected candidate status, mask status, hand reference count, and exported sheet count.
 The minimal UI now has a `Check workflows` button that locally validates required workflow placeholders without connecting to ComfyUI.
+The workflow check now also warns when the prediction color rough image placeholder is on a node that does not appear to be connected to the rest of the ComfyUI API workflow.
 ComfyUI workflow requirements are now documented in `docs/COMFYUI_WORKFLOW_REQUIREMENTS.md`, including required placeholders and expected output folders.
 Local AI setup guidance is now documented in `docs/LOCAL_AI_SETUP_GUIDE.md`.
 The post-AI setup implementation plan is now documented in `docs/ROADMAP.md` and `docs/TASK_QUEUE.md`.
@@ -171,15 +172,15 @@ It still does not wait for generation completion or automatically copy ComfyUI o
 
 ## Last Completed Task
 
-Planning:
-Documented the post-AI setup implementation plan after confirming that the app can queue a prediction workflow in external ComfyUI.
+Phase 9.1:
+Added a local workflow check that warns when the prediction color rough image input node is not connected to another node.
 
 ---
 
 ## Current Next Task
 
-Phase 9.1:
-Verify that the prediction workflow actually uses the color rough image input, not only that it can be queued.
+Phase 9.2:
+Document the minimum recommended prediction workflow structure for img2img or ControlNet.
 
 ---
 
@@ -190,7 +191,7 @@ Verify that the prediction workflow actually uses the color rough image input, n
 - Manual masking is intentionally used to avoid adding model-training complexity.
 - ComfyUI setup remains a user-side responsibility.
 - ComfyUI `Load Image` nodes may need files in ComfyUI's expected input location, depending on the workflow. If a workflow uses absolute paths incorrectly, queueing may succeed while generation still does not use the image as intended.
-- The current workflow test can prove that a placeholder exists, but it cannot fully prove that the node is connected to the generation path.
+- The current workflow test can prove that a placeholder exists and can catch clearly unconnected placeholder nodes, but it still cannot fully prove final image quality or whether the workflow uses the input effectively.
 
 ---
 

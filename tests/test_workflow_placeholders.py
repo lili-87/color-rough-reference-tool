@@ -7,6 +7,7 @@ from color_rough_ref_tool.integrations.comfyui.workflow_placeholders import (
     PREDICTION_WORKFLOW_NAME,
     prepare_workflow_placeholders,
     validate_hand_inpainting_workflow_placeholders,
+    validate_prediction_workflow_uses_color_rough_input,
     validate_prediction_workflow_placeholders,
 )
 
@@ -64,6 +65,48 @@ class WorkflowPlaceholderTest(unittest.TestCase):
 
         self.assertFalse(result.ok)
         self.assertEqual(result.missing_requirements, ("color rough image",))
+
+    def test_validate_prediction_workflow_uses_color_rough_input_accepts_connected_node(self) -> None:
+        result = validate_prediction_workflow_uses_color_rough_input(
+            {
+                "8": {
+                    "inputs": {
+                        "image": "{{COLOR_ROUGH_IMAGE_PATH}}",
+                    },
+                    "class_type": "LoadImage",
+                },
+                "9": {
+                    "inputs": {
+                        "image": ["8", 0],
+                    },
+                    "class_type": "PreviewImage",
+                },
+            }
+        )
+
+        self.assertTrue(result.ok)
+        self.assertEqual(result.warnings, ())
+
+    def test_validate_prediction_workflow_uses_color_rough_input_warns_about_unconnected_node(self) -> None:
+        result = validate_prediction_workflow_uses_color_rough_input(
+            {
+                "8": {
+                    "inputs": {
+                        "image": "{{COLOR_ROUGH_IMAGE_PATH}}",
+                    },
+                    "class_type": "LoadImage",
+                },
+                "9": {
+                    "inputs": {
+                        "text": "anime style",
+                    },
+                    "class_type": "CLIPTextEncode",
+                },
+            }
+        )
+
+        self.assertFalse(result.ok)
+        self.assertIn("node id: 8", result.warnings[0])
 
     def test_validate_hand_inpainting_workflow_placeholders_requires_selected_and_mask(self) -> None:
         result = validate_hand_inpainting_workflow_placeholders(
