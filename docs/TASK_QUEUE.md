@@ -88,7 +88,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 
 - [x] Phase 10.1: Store the latest prediction prompt ID after queueing.
 - [x] Phase 10.2: Add a minimal ComfyUI history lookup function for a prompt ID.
-- [ ] Phase 10.3: Detect finished prediction outputs from ComfyUI history.
+- [x] Phase 10.3: Detect finished prediction outputs from ComfyUI history.
 - [ ] Phase 10.4: Copy finished prediction images into `project_output/predictions/`.
 - [ ] Phase 10.5: Refresh prediction thumbnails after copied outputs are available.
 - [ ] Phase 10.6: Store the latest hand reference prompt ID after queueing.

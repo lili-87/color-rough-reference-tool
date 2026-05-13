@@ -72,6 +72,24 @@ class ComfyUIHistoryResult:
     history: dict[str, Any]
 
 
+@dataclass(frozen=True, slots=True)
+class ComfyUIHistoryImage:
+    """One image output reported by ComfyUI history."""
+
+    file_name: str
+    subfolder: str
+    image_type: str
+
+
+@dataclass(frozen=True, slots=True)
+class PredictionHistoryInspection:
+    """Small parsed status for one prediction history response."""
+
+    prompt_id: str
+    completed: bool
+    images: tuple[ComfyUIHistoryImage, ...]
+
+
 def trigger_prediction_workflow(
     settings: AppSettings,
     *,
@@ -230,6 +248,26 @@ def fetch_latest_prediction_history(
     )
 
 
+def inspect_prediction_history(
+    history_result: ComfyUIHistoryResult,
+) -> PredictionHistoryInspection:
+    """Detect completion and image outputs from a ComfyUI history response."""
+
+    prompt_history = history_result.history.get(history_result.prompt_id)
+    if not isinstance(prompt_history, dict):
+        return PredictionHistoryInspection(
+            prompt_id=history_result.prompt_id,
+            completed=False,
+            images=(),
+        )
+
+    return PredictionHistoryInspection(
+        prompt_id=history_result.prompt_id,
+        completed=_history_entry_is_completed(prompt_history),
+        images=_history_entry_images(prompt_history),
+    )
+
+
 def save_selected_prediction_candidate(
     candidate_path: Path | str,
     selected_dir: Path | str,
@@ -298,6 +336,51 @@ def _prompt_url(endpoint: str) -> str:
 def _history_url(endpoint: str, prompt_id: str) -> str:
     escaped_prompt_id = quote(prompt_id, safe="")
     return f"{normalize_comfyui_endpoint(endpoint)}{HISTORY_ENDPOINT_PATH}/{escaped_prompt_id}"
+
+
+def _history_entry_is_completed(prompt_history: dict[str, Any]) -> bool:
+    status = prompt_history.get("status")
+    if isinstance(status, dict) and status.get("completed") is True:
+        return True
+    return False
+
+
+def _history_entry_images(prompt_history: dict[str, Any]) -> tuple[ComfyUIHistoryImage, ...]:
+    outputs = prompt_history.get("outputs")
+    if not isinstance(outputs, dict):
+        return ()
+
+    images: list[ComfyUIHistoryImage] = []
+    for output in outputs.values():
+        if not isinstance(output, dict):
+            continue
+        raw_images = output.get("images")
+        if not isinstance(raw_images, list):
+            continue
+        for raw_image in raw_images:
+            image = _history_image_from_raw(raw_image)
+            if image is not None:
+                images.append(image)
+    return tuple(images)
+
+
+def _history_image_from_raw(raw_image: Any) -> ComfyUIHistoryImage | None:
+    if not isinstance(raw_image, dict):
+        return None
+
+    file_name = raw_image.get("filename")
+    if not isinstance(file_name, str) or not file_name:
+        return None
+    if Path(file_name).suffix.lower() not in PREDICTION_IMAGE_EXTENSIONS:
+        return None
+
+    subfolder = raw_image.get("subfolder", "")
+    image_type = raw_image.get("type", "")
+    return ComfyUIHistoryImage(
+        file_name=file_name,
+        subfolder=subfolder if isinstance(subfolder, str) else "",
+        image_type=image_type if isinstance(image_type, str) else "",
+    )
 
 
 def _replace_color_rough_placeholders(value: Any, image_path: str) -> Any:

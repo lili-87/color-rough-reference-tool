@@ -9,6 +9,7 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
     fetch_comfyui_history,
     fetch_latest_prediction_history,
     inject_color_rough_path,
+    inspect_prediction_history,
     load_prediction_workflow,
     queue_comfyui_prompt,
     read_prediction_outputs,
@@ -132,6 +133,74 @@ class ComfyUIPredictionTest(unittest.TestCase):
                 prompt_id=" ",
                 opener=lambda request, timeout: FakeResponse({}),
             )
+
+    def test_inspect_prediction_history_detects_completed_images(self) -> None:
+        history = fetch_comfyui_history(
+            endpoint="http://127.0.0.1:8188",
+            prompt_id="prediction-004",
+            opener=lambda request, timeout: FakeResponse(
+                {
+                    "prediction-004": {
+                        "status": {"completed": True},
+                        "outputs": {
+                            "7": {
+                                "images": [
+                                    {
+                                        "filename": "ComfyUI_00001_.png",
+                                        "subfolder": "",
+                                        "type": "output",
+                                    },
+                                    {
+                                        "filename": "notes.txt",
+                                        "subfolder": "",
+                                        "type": "output",
+                                    },
+                                ]
+                            }
+                        },
+                    }
+                }
+            ),
+        )
+
+        inspection = inspect_prediction_history(history)
+
+        self.assertTrue(inspection.completed)
+        self.assertEqual(inspection.prompt_id, "prediction-004")
+        self.assertEqual(len(inspection.images), 1)
+        self.assertEqual(inspection.images[0].file_name, "ComfyUI_00001_.png")
+        self.assertEqual(inspection.images[0].image_type, "output")
+
+    def test_inspect_prediction_history_reports_not_completed_without_history_entry(self) -> None:
+        history = fetch_comfyui_history(
+            endpoint="http://127.0.0.1:8188",
+            prompt_id="missing-prompt",
+            opener=lambda request, timeout: FakeResponse({}),
+        )
+
+        inspection = inspect_prediction_history(history)
+
+        self.assertFalse(inspection.completed)
+        self.assertEqual(inspection.images, ())
+
+    def test_inspect_prediction_history_reports_pending_without_completed_status(self) -> None:
+        history = fetch_comfyui_history(
+            endpoint="http://127.0.0.1:8188",
+            prompt_id="prediction-005",
+            opener=lambda request, timeout: FakeResponse(
+                {
+                    "prediction-005": {
+                        "status": {"completed": False},
+                        "outputs": {},
+                    }
+                }
+            ),
+        )
+
+        inspection = inspect_prediction_history(history)
+
+        self.assertFalse(inspection.completed)
+        self.assertEqual(inspection.images, ())
 
     def test_inject_color_rough_path_replaces_nested_placeholders(self) -> None:
         TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
