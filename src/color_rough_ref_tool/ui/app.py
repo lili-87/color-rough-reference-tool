@@ -232,6 +232,16 @@ def format_prediction_output_result(result: PredictionOutputReadResult) -> str:
     return " ".join(result.messages)
 
 
+def format_prediction_thumbnail_refresh_result(result: PredictionOutputReadResult) -> str:
+    """Return a short status message after refreshing prediction thumbnails."""
+
+    if not result.ok:
+        return format_prediction_output_result(result)
+    if len(result.images) == 1:
+        return "Prediction thumbnails refreshed: 1 image."
+    return f"Prediction thumbnails refreshed: {len(result.images)} images."
+
+
 def format_prediction_prompt_queued_message(result: ComfyUIPromptResult) -> str:
     """Return a short status message after queuing a prediction prompt."""
 
@@ -723,20 +733,26 @@ class ColorRoughReferenceApp:
         )
 
     def load_prediction_outputs(self) -> None:
+        """Reload prediction images and refresh their thumbnails in the UI."""
+
         try:
             settings = self._settings_from_form()
-            prepare_project_output(settings.default_output_dir)
-            result = read_prediction_outputs_safely(prediction_output_folder(settings))
+            result = self._refresh_prediction_thumbnails(settings)
         except ValueError as error:
             messagebox.showerror("Prediction outputs", format_error_message("load prediction outputs", error))
             return
 
-        self._render_prediction_outputs(result.images)
-        self.refresh_project_summary()
-        status = format_prediction_output_result(result)
+        status = format_prediction_thumbnail_refresh_result(result)
         self.status_message.set(status)
         if not result.ok:
             messagebox.showinfo("Prediction outputs", status)
+
+    def _refresh_prediction_thumbnails(self, settings: AppSettings) -> PredictionOutputReadResult:
+        output_folders = prepare_project_output(settings.default_output_dir)
+        result = read_prediction_outputs_safely(output_folders.predictions)
+        self._render_prediction_outputs(result.images)
+        self.refresh_project_summary()
+        return result
 
     def _render_prediction_outputs(self, outputs: tuple[PredictionOutputImage, ...]) -> None:
         for child in self.prediction_grid.winfo_children():

@@ -27,6 +27,7 @@ from color_rough_ref_tool.ui.app import (
     format_prediction_output_count,
     format_prediction_output_result,
     format_prediction_prompt_queued_message,
+    format_prediction_thumbnail_refresh_result,
     format_mask_candidate_message,
     format_saved_prediction_message,
     format_selected_prediction_message,
@@ -199,6 +200,32 @@ class UiAppTest(unittest.TestCase):
 
         self.assertEqual(
             format_prediction_output_result(result),
+            "No prediction images were found in: project_output/predictions",
+        )
+
+    def test_format_prediction_thumbnail_refresh_result_reports_refreshed_count(self) -> None:
+        output = PredictionOutputImage(
+            path=Path("predictions/pred_001.png"),
+            file_name="pred_001.png",
+            file_size_bytes=10,
+            modified_time=1.0,
+        )
+
+        self.assertEqual(
+            format_prediction_thumbnail_refresh_result(
+                PredictionOutputReadResult(images=(output,), messages=())
+            ),
+            "Prediction thumbnails refreshed: 1 image.",
+        )
+
+    def test_format_prediction_thumbnail_refresh_result_reports_read_messages(self) -> None:
+        result = PredictionOutputReadResult(
+            images=(),
+            messages=("No prediction images were found in: project_output/predictions",),
+        )
+
+        self.assertEqual(
+            format_prediction_thumbnail_refresh_result(result),
             "No prediction images were found in: project_output/predictions",
         )
 
