@@ -8,6 +8,9 @@ from color_rough_ref_tool.core.settings import AppSettings
 from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
     HAND_MASK_IMAGE_PATH_PLACEHOLDER,
     SELECTED_CANDIDATE_IMAGE_PATH_PLACEHOLDER,
+    HandReferenceHistoryImage,
+    HandReferenceHistoryInspection,
+    copy_finished_hand_reference_images,
     fetch_latest_hand_reference_history,
     inject_hand_inpainting_paths,
     inspect_hand_reference_history,
@@ -164,6 +167,121 @@ class ComfyUIHandInpaintingTest(unittest.TestCase):
 
         self.assertFalse(inspection.completed)
         self.assertEqual(inspection.images, ())
+
+    def test_copy_finished_hand_reference_images_copies_history_images_to_hand_refs(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            temp_path = Path(temp_dir)
+            comfyui_output_dir = temp_path / "comfyui_output"
+            hand_refs_dir = temp_path / "project_output" / "hand_refs"
+            comfyui_output_dir.mkdir()
+            source_path = comfyui_output_dir / "ComfyUI_hand_00001_.png"
+            source_path.write_bytes(b"generated hand reference bytes")
+            inspection = HandReferenceHistoryInspection(
+                prompt_id="hand-006",
+                completed=True,
+                images=(
+                    HandReferenceHistoryImage(
+                        file_name="ComfyUI_hand_00001_.png",
+                        subfolder="",
+                        image_type="output",
+                    ),
+                ),
+            )
+
+            copied = copy_finished_hand_reference_images(
+                inspection,
+                comfyui_output_dir=comfyui_output_dir,
+                hand_refs_dir=hand_refs_dir,
+            )
+
+            self.assertEqual(len(copied), 1)
+            self.assertEqual(copied[0].source_path, source_path)
+            self.assertEqual(copied[0].saved_path, hand_refs_dir / "ComfyUI_hand_00001_.png")
+            self.assertEqual(copied[0].saved_path.read_bytes(), b"generated hand reference bytes")
+
+    def test_copy_finished_hand_reference_images_uses_comfyui_subfolder(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            temp_path = Path(temp_dir)
+            comfyui_output_dir = temp_path / "comfyui_output"
+            nested_dir = comfyui_output_dir / "roughref_hand"
+            hand_refs_dir = temp_path / "project_output" / "hand_refs"
+            nested_dir.mkdir(parents=True)
+            (nested_dir / "ComfyUI_hand_00002_.webp").write_bytes(b"nested hand reference bytes")
+            inspection = HandReferenceHistoryInspection(
+                prompt_id="hand-007",
+                completed=True,
+                images=(
+                    HandReferenceHistoryImage(
+                        file_name="ComfyUI_hand_00002_.webp",
+                        subfolder="roughref_hand",
+                        image_type="output",
+                    ),
+                ),
+            )
+
+            copied = copy_finished_hand_reference_images(
+                inspection,
+                comfyui_output_dir=comfyui_output_dir,
+                hand_refs_dir=hand_refs_dir,
+            )
+
+            self.assertEqual(copied[0].source_path, nested_dir / "ComfyUI_hand_00002_.webp")
+            self.assertEqual(copied[0].saved_path.read_bytes(), b"nested hand reference bytes")
+
+    def test_copy_finished_hand_reference_images_skips_pending_history(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            temp_path = Path(temp_dir)
+            comfyui_output_dir = temp_path / "comfyui_output"
+            hand_refs_dir = temp_path / "project_output" / "hand_refs"
+            comfyui_output_dir.mkdir()
+            inspection = HandReferenceHistoryInspection(
+                prompt_id="hand-008",
+                completed=False,
+                images=(
+                    HandReferenceHistoryImage(
+                        file_name="ComfyUI_hand_00003_.png",
+                        subfolder="",
+                        image_type="output",
+                    ),
+                ),
+            )
+
+            copied = copy_finished_hand_reference_images(
+                inspection,
+                comfyui_output_dir=comfyui_output_dir,
+                hand_refs_dir=hand_refs_dir,
+            )
+
+            self.assertEqual(copied, ())
+            self.assertFalse(hand_refs_dir.exists())
+
+    def test_copy_finished_hand_reference_images_rejects_unsafe_history_paths(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            comfyui_output_dir = Path(temp_dir) / "comfyui_output"
+            hand_refs_dir = Path(temp_dir) / "project_output" / "hand_refs"
+            comfyui_output_dir.mkdir()
+            inspection = HandReferenceHistoryInspection(
+                prompt_id="hand-009",
+                completed=True,
+                images=(
+                    HandReferenceHistoryImage(
+                        file_name="ComfyUI_hand_00004_.png",
+                        subfolder="..",
+                        image_type="output",
+                    ),
+                ),
+            )
+
+            with self.assertRaises(ValueError):
+                copy_finished_hand_reference_images(
+                    inspection,
+                    comfyui_output_dir=comfyui_output_dir,
+                    hand_refs_dir=hand_refs_dir,
+                )
 
     def test_inject_hand_inpainting_paths_replaces_nested_placeholders(self) -> None:
         TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
