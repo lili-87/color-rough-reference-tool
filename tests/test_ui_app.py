@@ -101,6 +101,24 @@ class UiAppTest(unittest.TestCase):
         self.assertIn("endpoint URL and port match this app", message)
         self.assertIn("Details:", message)
 
+    def test_format_error_message_adds_history_hint(self) -> None:
+        message = format_error_message(
+            "load prediction outputs",
+            ValueError("ComfyUI history response was not valid JSON."),
+        )
+
+        self.assertIn("check ComfyUI history", message)
+        self.assertIn("saved prompt ID", message)
+
+    def test_format_error_message_adds_output_download_hint(self) -> None:
+        message = format_error_message(
+            "load hand reference outputs",
+            ConnectionError("Could not fetch ComfyUI hand reference image: ComfyUI_00001_.png"),
+        )
+
+        self.assertIn("could not download it", message)
+        self.assertIn("press Load again", message)
+
     def test_format_error_message_adds_selected_candidate_hint(self) -> None:
         message = format_error_message(
             "queue hand reference generation",
@@ -313,6 +331,7 @@ class UiAppTest(unittest.TestCase):
         )
 
         self.assertIn("Imported 1 prediction image from ComfyUI history", message)
+        self.assertIn("project_output/predictions", message)
         self.assertIn("Prediction thumbnails refreshed", message)
 
     def test_format_prediction_history_import_status_reports_pending_history(self) -> None:
@@ -328,8 +347,42 @@ class UiAppTest(unittest.TestCase):
             refresh_result=result,
         )
 
-        self.assertIn("not finished yet", message)
+        self.assertIn("still generating", message)
         self.assertIn("press Load predictions again", message)
+
+    def test_format_prediction_history_import_status_reports_missing_prompt_id(self) -> None:
+        result = PredictionOutputReadResult(
+            images=(),
+            messages=("No prediction images were found in: project_output/predictions",),
+        )
+
+        message = format_prediction_history_import_status(
+            history_checked=False,
+            history_completed=False,
+            imported_count=0,
+            refresh_result=result,
+        )
+
+        self.assertIn("No saved prediction prompt ID", message)
+        self.assertIn("only the local predictions folder was refreshed", message)
+
+    def test_format_prediction_history_import_status_reports_no_history_images(self) -> None:
+        output = PredictionOutputImage(
+            path=Path("predictions/old.png"),
+            file_name="old.png",
+            file_size_bytes=20,
+            modified_time=2.0,
+        )
+
+        message = format_prediction_history_import_status(
+            history_checked=True,
+            history_completed=True,
+            imported_count=0,
+            refresh_result=PredictionOutputReadResult(images=(output,), messages=()),
+        )
+
+        self.assertIn("did not list any prediction image files", message)
+        self.assertIn("Save Image node", message)
 
     def test_format_selected_prediction_message_reports_file_name(self) -> None:
         output = PredictionOutputImage(
@@ -500,6 +553,7 @@ class UiAppTest(unittest.TestCase):
         )
 
         self.assertIn("Imported 1 hand reference image from ComfyUI history", message)
+        self.assertIn("project_output/hand_refs", message)
         self.assertIn("Hand reference thumbnails refreshed", message)
 
     def test_format_hand_reference_history_import_status_reports_pending_history(self) -> None:
@@ -515,8 +569,42 @@ class UiAppTest(unittest.TestCase):
             refresh_result=result,
         )
 
-        self.assertIn("not finished yet", message)
+        self.assertIn("still generating", message)
         self.assertIn("press Load hand refs again", message)
+
+    def test_format_hand_reference_history_import_status_reports_missing_prompt_id(self) -> None:
+        result = HandReferenceOutputReadResult(
+            images=(),
+            messages=("No hand reference images were found in: project_output/hand_refs",),
+        )
+
+        message = format_hand_reference_history_import_status(
+            history_checked=False,
+            history_completed=False,
+            imported_count=0,
+            refresh_result=result,
+        )
+
+        self.assertIn("No saved hand reference prompt ID", message)
+        self.assertIn("only the local hand_refs folder was refreshed", message)
+
+    def test_format_hand_reference_history_import_status_reports_no_history_images(self) -> None:
+        output = HandReferenceOutputImage(
+            path=Path("hand_refs/old.png"),
+            file_name="old.png",
+            file_size_bytes=20,
+            modified_time=2.0,
+        )
+
+        message = format_hand_reference_history_import_status(
+            history_checked=True,
+            history_completed=True,
+            imported_count=0,
+            refresh_result=HandReferenceOutputReadResult(images=(output,), messages=()),
+        )
+
+        self.assertIn("did not list any hand reference image files", message)
+        self.assertIn("Save Image node", message)
 
     def test_format_exported_hand_reference_sheet_message_reports_saved_path(self) -> None:
         self.assertEqual(

@@ -129,6 +129,12 @@ def format_error_message(action: str, error: Exception) -> str:
                 "If the browser page does not open, check that ComfyUI finished starting and that the endpoint URL and port match this app.",
             )
         )
+    if "history" in detail_lower:
+        hints.append("The app tried to check ComfyUI history for the saved prompt ID. Keep ComfyUI running, then press the Load button again after generation finishes.")
+    if "could not fetch comfyui output image" in detail_lower or "could not fetch comfyui hand reference image" in detail_lower:
+        hints.append("ComfyUI history listed an output image, but the app could not download it. Check that the image still appears in ComfyUI, then press Load again.")
+    if "output image was empty" in detail_lower or "hand reference image was empty" in detail_lower:
+        hints.append("ComfyUI returned an empty image file. Try opening the generated image in ComfyUI, or generate it again.")
     if "workflow" in detail_lower:
         hints.append("Check the workflow file path. Placeholder files must be replaced with real ComfyUI workflow JSON files.")
     if "selected_candidate.json" in detail_lower or "selected candidate" in detail_lower:
@@ -316,19 +322,24 @@ def format_prediction_history_import_status(
 
     refresh_status = format_prediction_manual_load_status(refresh_result)
     if not history_checked:
-        return refresh_status
+        return (
+            "No saved prediction prompt ID was found yet, so only the local predictions folder was refreshed. "
+            "After pressing Regenerate prediction, wait for ComfyUI to finish, then press Load predictions. "
+            f"{refresh_status}"
+        )
     if not history_completed:
         return (
-            "ComfyUI history says the latest prediction is not finished yet. "
+            "The latest prediction is still generating or not ready in ComfyUI history yet. "
             "Wait until ComfyUI finishes, then press Load predictions again. "
             f"{refresh_status}"
         )
     if imported_count == 1:
-        return f"Imported 1 prediction image from ComfyUI history. {refresh_status}"
+        return f"Imported 1 prediction image from ComfyUI history into project_output/predictions. {refresh_status}"
     if imported_count > 1:
-        return f"Imported {imported_count} prediction images from ComfyUI history. {refresh_status}"
+        return f"Imported {imported_count} prediction images from ComfyUI history into project_output/predictions. {refresh_status}"
     return (
-        "ComfyUI history says the latest prediction is finished, but it did not report any prediction images to import. "
+        "ComfyUI history says the latest prediction is finished, but it did not list any prediction image files to import. "
+        "Check the workflow's Save Image node and ComfyUI output panel. "
         f"{refresh_status}"
     )
 
@@ -450,19 +461,24 @@ def format_hand_reference_history_import_status(
 
     refresh_status = format_hand_reference_manual_load_status(refresh_result)
     if not history_checked:
-        return refresh_status
+        return (
+            "No saved hand reference prompt ID was found yet, so only the local hand_refs folder was refreshed. "
+            "After pressing Regenerate hand ref, wait for ComfyUI to finish, then press Load hand refs. "
+            f"{refresh_status}"
+        )
     if not history_completed:
         return (
-            "ComfyUI history says the latest hand reference generation is not finished yet. "
+            "The latest hand reference generation is still generating or not ready in ComfyUI history yet. "
             "Wait until ComfyUI finishes, then press Load hand refs again. "
             f"{refresh_status}"
         )
     if imported_count == 1:
-        return f"Imported 1 hand reference image from ComfyUI history. {refresh_status}"
+        return f"Imported 1 hand reference image from ComfyUI history into project_output/hand_refs. {refresh_status}"
     if imported_count > 1:
-        return f"Imported {imported_count} hand reference images from ComfyUI history. {refresh_status}"
+        return f"Imported {imported_count} hand reference images from ComfyUI history into project_output/hand_refs. {refresh_status}"
     return (
-        "ComfyUI history says the latest hand reference generation is finished, but it did not report any hand reference images to import. "
+        "ComfyUI history says the latest hand reference generation is finished, but it did not list any hand reference image files to import. "
+        "Check the workflow's Save Image node and ComfyUI output panel. "
         f"{refresh_status}"
     )
 

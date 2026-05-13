@@ -349,6 +349,41 @@ Verification:
 
 ---
 
+## Phase 13.3 Output Pickup Messages
+
+Date: 2026-05-13
+
+Goal:
+Improve the simple UI messages for pending generation, copied images, missing ComfyUI output files, and history lookup failures.
+
+Result:
+Completed.
+
+What changed:
+
+- `Load predictions` now explains when no saved prediction prompt ID exists and only the local predictions folder was refreshed.
+- `Load predictions` now describes pending ComfyUI history as still generating or not ready yet.
+- `Load predictions` now says when images were imported into `project_output/predictions/`.
+- `Load predictions` now explains when ComfyUI history is complete but no prediction image files were listed.
+- `Load hand refs` now explains when no saved hand reference prompt ID exists and only the local hand_refs folder was refreshed.
+- `Load hand refs` now describes pending ComfyUI history as still generating or not ready yet.
+- `Load hand refs` now says when images were imported into `project_output/hand_refs/`.
+- `Load hand refs` now explains when ComfyUI history is complete but no hand reference image files were listed.
+- Error messages now include clearer hints when history lookup fails or when ComfyUI history lists an image but the app cannot download it.
+
+Scope notes:
+
+- No automatic wait loop was added.
+- No new ComfyUI connection method was added.
+- No cloud/API integration was added.
+- No ComfyUI, model, or checkpoint files were bundled.
+
+Verification:
+
+- `python -m unittest tests.test_ui_app tests.test_comfyui_hand_inpainting`
+
+---
+
 ## What Should Exist in v0.1
 
 - Color rough loading
@@ -378,15 +413,15 @@ Verification:
 
 ## Last Completed Task
 
-Phase 13.2:
-Implemented hand reference output pickup from the latest saved hand reference prompt ID when pressing `Load hand refs`.
+Phase 13.3:
+Improved user-facing output pickup messages for pending generation, imported images, missing history images, and history/output download failures.
 
 ---
 
 ## Current Next Task
 
-Phase 13.3:
-Add simple UI messages for pending generation, copied images, missing ComfyUI output files, and history lookup failures.
+Phase 13.4:
+Consider optional automatic polling only after the manual Load import flow is stable.
 
 ---
 
