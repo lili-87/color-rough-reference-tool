@@ -185,7 +185,82 @@ Hand reference testing comes after selecting and saving a prediction candidate a
 
 ---
 
-## 7. Troubleshooting Checklist
+## 7. v0.1 Full Usage Steps
+
+Use this order for the current v0.1 workflow.
+
+```text
+1. Start external ComfyUI.
+2. Confirm http://127.0.0.1:8188 opens in a browser.
+3. Start Color Rough Reference Tool.
+4. Choose a color rough image.
+5. Confirm the ComfyUI endpoint is correct.
+6. Select the prediction workflow JSON.
+7. Select the hand inpainting workflow JSON.
+8. Press Check settings.
+9. Press Check workflows.
+10. Press Regenerate prediction.
+11. Wait until ComfyUI finishes generation.
+12. Press Load predictions.
+13. Select one prediction candidate.
+14. Press Save selected.
+15. Press Load selected for mask.
+16. Draw a hand mask with Brush or Rectangle.
+17. Press Save mask.
+18. Press Regenerate hand ref.
+19. Wait until ComfyUI finishes generation.
+20. Press Load hand refs.
+21. Press Export sheet if you want a sheet image.
+22. Confirm saved files in project_output/.
+```
+
+Main saved locations:
+
+```text
+project_output/input/
+project_output/predictions/
+project_output/selected/
+project_output/masks/
+project_output/hand_refs/
+project_output/sheets/
+project_output/metadata/
+```
+
+The app is meant to organize and save local ComfyUI results.
+ComfyUI, checkpoints, ControlNet models, inpainting models, and custom nodes stay outside this app.
+
+---
+
+## 8. v0.1 Known Issues
+
+These are known limitations of the current v0.1 validation state.
+
+- ComfyUI must be started separately before generation.
+- The app does not include models, checkpoints, ComfyUI, paid APIs, or cloud GPU setup.
+- Workflow JSON files must be real ComfyUI API-format workflows.
+- `Check workflows` can catch missing placeholders and clearly disconnected placeholder nodes, but it cannot judge final image quality.
+- A workflow can still produce poor results if denoise, prompt, checkpoint, VAE, mask, or inpainting settings are not suitable.
+- If generated images do not appear after pressing Load predictions or Load hand refs, wait for ComfyUI to finish and press the Load button again.
+- Depending on the workflow output path, generated images may still need to be copied or configured into `project_output/predictions/` or `project_output/hand_refs/`.
+- Hand reference quality depends heavily on the selected candidate, mask shape, inpainting workflow, and model choice.
+- Manual mask editing is intentionally simple. Automatic hand detection is not part of v0.1.
+- Advanced project management, multiple named projects, and automatic background polling are not part of v0.1.
+
+Recommended first working setup:
+
+```text
+SDXL anime checkpoint
+simple img2img prediction workflow
+simple inpainting workflow
+manual mask
+local ComfyUI only
+```
+
+After this works, improve quality by adjusting prompts, denoise, mask size, inpainting settings, or by adding ControlNet inside ComfyUI.
+
+---
+
+## 9. Troubleshooting Checklist
 
 If generation does not work, check these items from top to bottom.
 
@@ -223,14 +298,14 @@ Keep the first working setup simple. Use one SDXL checkpoint first, then add Con
 
 ---
 
-## 8. Still Not Implemented
+## 10. Still Not Implemented
 
 These are intentionally left for later app-side tasks:
 
-- waiting for ComfyUI generation to finish
-- importing ComfyUI output images from history directly when pressing Load predictions or Load hand refs
+- automatic waiting for ComfyUI generation to finish
 - fully automatic polling after generation
-- verifying that the workflow graph actually uses the provided image inputs
+- a polished one-click output pickup flow for every workflow shape
+- proving final image quality or artistic correctness
 - advanced workflow editing
 - cloud GPU support
 - paid API support
@@ -238,18 +313,15 @@ These are intentionally left for later app-side tasks:
 
 ---
 
-## 9. Current Next Development Order
+## 11. Current Next Development Order
 
-After the first successful queue test, continue in this order:
+After v0.1 validation, continue in this order:
 
 ```text
-1. Confirm the prediction workflow really uses the color rough image.
-2. Confirm the hand inpainting workflow really uses selected candidate + mask.
-3. Confirm sheet export and metadata after a full workflow.
-4. Update final v0.1 usage notes and known issues.
-5. Make Load predictions import finished images from the latest saved prediction prompt ID.
-6. Make Load hand refs import finished images from the latest saved hand reference prompt ID.
-7. Add clearer messages when generation is still pending or output files cannot be found.
+1. Make Load predictions import finished images from the latest saved prediction prompt ID.
+2. Make Load hand refs import finished images from the latest saved hand reference prompt ID.
+3. Add clearer messages when generation is still pending or output files cannot be found.
+4. Consider automatic polling only after the manual Load flow is stable.
 ```
 
 Do not add paid APIs, cloud GPU settings, bundled models, local reference search, or Blender / 3D work during this initial version.

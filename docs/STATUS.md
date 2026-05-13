@@ -249,6 +249,28 @@ The app can create the needed sheet and metadata from saved local files, but out
 
 ---
 
+## Phase 12.4 Final v0.1 Usage Notes
+
+Date: 2026-05-13
+
+Goal:
+Document the final v0.1 usage flow and known issues after real local ComfyUI validation.
+
+Result:
+Completed.
+
+What was updated:
+
+- `docs/LOCAL_AI_SETUP_GUIDE.md` now includes a full v0.1 usage order from starting ComfyUI through exporting a hand reference sheet.
+- The guide now lists the main saved output locations under `project_output/`.
+- The guide now has a v0.1 known issues section for ComfyUI startup, external models, workflow JSON setup, manual loading, and quality limitations.
+- The next development order now starts with Phase 13 output pickup usability.
+
+Decision:
+Phase 12 validation is complete enough for v0.1 documentation. The next work should improve manual output pickup without adding paid APIs, cloud GPU dependencies, bundled models, or automatic polling yet.
+
+---
+
 ## Phase 13 Plan
 
 Goal:
@@ -292,15 +314,15 @@ Planned order:
 
 ## Last Completed Task
 
-Phase 12.3:
-Confirmed that a completed local workflow has prediction images, a selected candidate, a saved mask, hand reference images, exported sheet output, and the core metadata files.
+Phase 12.4:
+Documented final v0.1 usage steps, known issues, saved output locations, and the next development order.
 
 ---
 
 ## Current Next Task
 
-Phase 12.4:
-Update docs with final v0.1 known issues and usage steps.
+Phase 13.1:
+Make Load predictions import finished images from the latest saved prediction prompt ID, then refresh thumbnails.
 
 ---
 

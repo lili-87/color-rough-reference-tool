@@ -113,7 +113,8 @@ Codex should work on the next unfinished task only unless the user says otherwis
   - 2026-05-13 rerun: After replacing hand workflow image values with selected candidate and mask placeholders, the user reported that hand reference generation worked.
 - [x] Phase 12.3: Confirm sheet export and metadata after a full workflow.
   - 2026-05-13 check: Confirmed 2 prediction images, 1 saved selected candidate, 1 saved mask, 4 hand reference images, exported `hand_sheet_001.png`, and saved `project.json`, `predictions.json`, `hand_refs.json`, and `settings_snapshot.json`.
-- [ ] Phase 12.4: Update docs with final v0.1 known issues and usage steps.
+- [x] Phase 12.4: Update docs with final v0.1 known issues and usage steps.
+  - 2026-05-13 update: Added final v0.1 usage steps, known issues, saved output locations, and next development order to the local AI setup guide.
 
 ## Phase 13: Output Pickup Usability
 
