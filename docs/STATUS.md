@@ -487,6 +487,161 @@ Verification:
 
 ---
 
+## Phase 15.2 Real End-to-End Friction Check
+
+Date: 2026-05-13
+
+Goal:
+Use the v0.1 checklist to confirm the real local workflow state and record practical friction points before adding new automation.
+
+Result:
+Pass with minor non-blocking issues.
+
+What was checked:
+
+- External ComfyUI endpoint responded at `http://127.0.0.1:8188`.
+- Real workflow JSON files exist:
+  - `workflows/prediction_workflow.json`
+  - `workflows/hand_inpainting_workflow.json`
+- The prediction workflow contains the color rough placeholder.
+- The hand inpainting workflow contains both selected candidate and hand mask placeholders.
+- `project_output/predictions/` contains prediction images.
+- `project_output/selected/` contains saved selected candidate images.
+- `project_output/masks/` contains saved hand mask images.
+- `project_output/hand_refs/` contains hand reference images.
+- `project_output/sheets/hand_sheet_001.png` exists.
+- Basic metadata exists in `project_output/metadata/`, including project, prediction, hand reference, selected candidate, settings snapshot, and latest prompt ID files.
+
+Checklist result:
+
+- Color rough to prediction output: confirmed from saved project output and prior successful generation.
+- Prediction candidate selection and saving: confirmed from saved selected candidate output.
+- Mask saving: confirmed from saved mask output.
+- Hand reference output: confirmed from saved hand reference output.
+- Sheet export: confirmed from saved sheet output.
+- Metadata saving: confirmed from metadata files.
+- Local-only policy: maintained. No ComfyUI files, models, paid APIs, cloud GPU settings, local search, Blender, or 3D features were added.
+
+Practical friction points:
+
+- Workflow setup remains the hardest beginner step. In earlier real use, the placeholder existed but the image node was not connected to the actual generation route.
+- Exporting ComfyUI workflow JSON in API format is easy to miss.
+- Prediction workflow setup became understandable after the img2img connection was explained, but the user still needed guidance.
+- Hand inpainting quality can look wrong if the workflow or denoise/mask/model settings ignore the selected candidate too strongly.
+- Manual `Load predictions` and `Load hand refs` is acceptable for v0.1, but users must understand that they should press Load after ComfyUI finishes.
+- The current UI is intentionally simple and usable, but the workflow setup still benefits from docs.
+
+Blocking issues before v0.1:
+
+- None found in the app-side file/output flow.
+
+Non-blocking issues for later:
+
+- Add more beginner examples for ComfyUI workflow setup if users keep getting disconnected placeholder warnings.
+- Improve hand inpainting workflow guidance if generated hands keep ignoring the selected candidate.
+- Reconsider optional polling only after more real use shows manual Load is a frequent mistake.
+
+Scope notes:
+
+- No code changes were made.
+- No automatic polling was added.
+- No cloud/API integration was added.
+- No ComfyUI, model, or checkpoint files were bundled.
+
+Verification:
+
+- Documentation and existing-output check only. A new generation was not queued during this task.
+
+---
+
+## Phase 15.3 Blocking Confusion Review
+
+Date: 2026-05-13
+
+Goal:
+Fix only blocking documentation or UI-message confusion found during the Phase 15.2 real end-to-end check.
+
+Result:
+Completed with no additional fixes required.
+
+Review:
+
+- Phase 15.2 found no blocking issues in the app-side file/output flow.
+- The remaining friction points are real, but they are non-blocking for v0.1:
+  - ComfyUI workflow setup is still the hardest beginner step.
+  - API-format workflow export is easy to miss.
+  - Hand inpainting quality depends on workflow, mask, denoise, and model settings.
+  - Manual Load buttons require the user to press Load after ComfyUI finishes.
+- Existing docs already cover the current v0.1 recovery path well enough to continue to final v0.1 decision.
+
+Decision:
+Do not add code changes or extra documentation changes in Phase 15.3. Move to Phase 15.4 and record the final v0.1 completion decision.
+
+Scope notes:
+
+- No code changes were made.
+- No automatic polling was added.
+- No cloud/API integration was added.
+- No ComfyUI, model, or checkpoint files were bundled.
+
+Verification:
+
+- Documentation review only. Automated tests were not run.
+
+---
+
+## Phase 15.4 Final v0.1 Decision
+
+Date: 2026-05-13
+
+Goal:
+Record whether the current app is complete enough for v0.1.
+
+Result:
+v0.1 complete.
+
+Decision:
+The current app is complete enough for v0.1 as a local ComfyUI workflow support tool.
+
+Reason:
+
+- The app has a launch path through `run_app.py` and `start_app.bat`.
+- Real prediction and hand inpainting workflow JSON files exist.
+- External ComfyUI was reachable during Phase 15 validation.
+- Saved project outputs exist for predictions, selected candidates, masks, hand references, sheets, and metadata.
+- Phase 15.2 found no blocking issue in the app-side file/output flow.
+- Phase 15.3 found no blocking documentation or UI-message fix required before the final decision.
+- Remaining issues are workflow setup and output-quality limitations, not app-side completion blockers.
+- The app still follows the required local-only policy: no ComfyUI bundling, no model bundling, no paid API, no cloud GPU dependency, no local reference search, and no Blender / 3D work.
+
+Accepted v0.1 limitations:
+
+- ComfyUI must be started separately.
+- The user must provide local models and real API-format workflow JSON files.
+- Manual `Load predictions` and `Load hand refs` actions remain part of the workflow.
+- Image quality depends on the user's checkpoint, workflow, denoise, prompt, mask, and inpainting settings.
+- Hand inpainting may require workflow tuning if it ignores the selected candidate or mask too strongly.
+
+What should happen after v0.1:
+
+- Use the app on more real drawing sessions.
+- Improve ComfyUI workflow guidance only where users actually get stuck.
+- Keep manual Load as the stable default unless repeated real use proves optional polling is needed.
+- Continue avoiding paid APIs, cloud GPU assumptions, bundled models, local reference search, and Blender / 3D features unless the project scope changes explicitly.
+
+Scope notes:
+
+- No code changes were made.
+- No automatic polling was added.
+- No cloud/API integration was added.
+- No ComfyUI, model, or checkpoint files were bundled.
+
+Verification:
+
+- Documentation and existing-output confirmation only. Automated tests were not run.
+
+---
+
 ## What Should Exist in v0.1
 
 - Color rough loading
@@ -516,15 +671,15 @@ Verification:
 
 ## Last Completed Task
 
-Phase 15.1:
-Created the v0.1 end-to-end confirmation checklist and completion criteria.
+Phase 15.4:
+Recorded the final v0.1 decision. The current app is complete enough for v0.1 as a local ComfyUI workflow support tool.
 
 ---
 
 ## Current Next Task
 
-Phase 15.2:
-Run one real end-to-end workflow using the v0.1 checklist and record practical friction points.
+Post-v0.1:
+Use the app in more real drawing sessions and only add improvements based on repeated practical friction.
 
 ---
 

@@ -136,6 +136,9 @@ Codex should work on the next unfinished task only unless the user says otherwis
 
 - [x] Phase 15.1: Create the real end-to-end confirmation checklist and v0.1 completion criteria.
   - 2026-05-13 update: Added `docs/V0_1_COMPLETION_CHECKLIST.md` with the full manual end-to-end check, output folders, friction log template, and v0.1 pass/fail criteria.
-- [ ] Phase 15.2: Run one real end-to-end workflow using the v0.1 checklist and record practical friction points.
-- [ ] Phase 15.3: Fix only blocking documentation or UI-message confusion found during the real end-to-end check.
-- [ ] Phase 15.4: Record the final v0.1 decision and mark whether the current app is complete enough for v0.1.
+- [x] Phase 15.2: Run one real end-to-end workflow using the v0.1 checklist and record practical friction points.
+  - 2026-05-13 check: External ComfyUI endpoint responded, real workflow JSON files exist, prediction/selected/mask/hand reference/sheet/metadata outputs exist, and practical friction points were recorded in `docs/STATUS.md`.
+- [x] Phase 15.3: Fix only blocking documentation or UI-message confusion found during the real end-to-end check.
+  - 2026-05-13 review: No blocking documentation or UI-message confusion was found in Phase 15.2, so no code or extra documentation fix was required.
+- [x] Phase 15.4: Record the final v0.1 decision and mark whether the current app is complete enough for v0.1.
+  - 2026-05-13 decision: v0.1 is complete as a local ComfyUI workflow support tool. Remaining setup and quality issues are documented limitations, not blockers.

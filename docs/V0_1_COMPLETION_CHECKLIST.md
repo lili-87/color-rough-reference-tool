@@ -206,3 +206,35 @@ Non-blocking issues for later:
 Decision:
 v0.1 complete / needs one more fix pass
 ```
+
+---
+
+## 8. Final v0.1 Decision
+
+Date:
+2026-05-13
+
+Result:
+v0.1 complete.
+
+Reason:
+
+- The app launches through `run_app.py` or `start_app.bat`.
+- Real workflow JSON files exist for prediction and hand inpainting.
+- External ComfyUI was reachable during the final validation.
+- Prediction images, selected candidate images, mask images, hand reference images, sheet output, and metadata files exist under `project_output/`.
+- Phase 15.2 found no blocking issue in the app-side file/output flow.
+- Phase 15.3 found no blocking documentation or UI-message fix required before v0.1.
+- Remaining issues are acceptable v0.1 limitations and are documented.
+- The app still does not include ComfyUI, AI models, paid APIs, cloud GPU settings, local reference search, Blender, or 3D features.
+
+Known limitations accepted for v0.1:
+
+- ComfyUI must be started separately.
+- The user must provide local models and real API-format workflow JSON files.
+- Manual `Load predictions` and `Load hand refs` actions are still part of the workflow.
+- Final image quality depends on ComfyUI workflow setup, model choice, denoise, prompts, and mask quality.
+- Hand inpainting may need workflow tuning if it ignores the selected candidate or mask too strongly.
+
+Decision:
+The current app is complete enough for v0.1 as a local ComfyUI workflow support tool.
