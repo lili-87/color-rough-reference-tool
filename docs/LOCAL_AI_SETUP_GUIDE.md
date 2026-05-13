@@ -152,7 +152,8 @@ project_output/hand_refs/
 ```
 
 The app can read and show images from those folders.
-It does not yet wait for ComfyUI generation completion or fetch ComfyUI history automatically.
+The app does not yet wait for ComfyUI generation completion automatically.
+If the Load buttons do not show new images, copy the generated files from the external ComfyUI output folder into the matching project output folder, then press Load predictions or Load hand refs.
 
 Supported image formats:
 
@@ -227,8 +228,8 @@ Keep the first working setup simple. Use one SDXL checkpoint first, then add Con
 These are intentionally left for later app-side tasks:
 
 - waiting for ComfyUI generation to finish
-- reading ComfyUI history automatically
-- copying ComfyUI output images automatically
+- importing ComfyUI output images from history directly when pressing Load predictions or Load hand refs
+- fully automatic polling after generation
 - verifying that the workflow graph actually uses the provided image inputs
 - advanced workflow editing
 - cloud GPU support
@@ -244,11 +245,11 @@ After the first successful queue test, continue in this order:
 ```text
 1. Confirm the prediction workflow really uses the color rough image.
 2. Confirm the hand inpainting workflow really uses selected candidate + mask.
-3. Add ComfyUI history lookup for queued prompt IDs.
-4. Copy finished prediction images automatically into project_output/predictions/.
-5. Copy finished hand reference images automatically into project_output/hand_refs/.
-6. Refresh thumbnails automatically after copied outputs are available.
-7. Run one complete v0.1 test from color rough to exported hand sheet.
+3. Confirm sheet export and metadata after a full workflow.
+4. Update final v0.1 usage notes and known issues.
+5. Make Load predictions import finished images from the latest saved prediction prompt ID.
+6. Make Load hand refs import finished images from the latest saved hand reference prompt ID.
+7. Add clearer messages when generation is still pending or output files cannot be found.
 ```
 
 Do not add paid APIs, cloud GPU settings, bundled models, local reference search, or Blender / 3D work during this initial version.

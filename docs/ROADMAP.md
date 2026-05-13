@@ -220,6 +220,23 @@ The full color rough to hand reference workflow works locally with external Comf
 
 ---
 
+## Phase 13: Output Pickup Usability
+
+Goal:
+Reduce the remaining manual copying after ComfyUI finishes generation.
+
+Tasks:
+- Make Load predictions try to import finished images from the latest saved prediction prompt ID before refreshing thumbnails
+- Make Load hand refs try to import finished images from the latest saved hand reference prompt ID before refreshing thumbnails
+- Show a simple message when generation is still running, when images were copied, or when ComfyUI history cannot find output files
+- Keep this as a manual Load button action first
+- Do not add automatic polling until the manual import flow is stable
+
+Completion condition:
+After ComfyUI finishes generation, the user can press Load predictions or Load hand refs and the app copies the finished images into the project output folders automatically.
+
+---
+
 ## Not Planned for Initial Version
 
 - Local reference search

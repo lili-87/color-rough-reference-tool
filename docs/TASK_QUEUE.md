@@ -106,8 +106,17 @@ Codex should work on the next unfinished task only unless the user says otherwis
 
 ## Phase 12: v0.1 Validation
 
-- [ ] Phase 12.1: Run one complete manual prediction test with external ComfyUI.
+- [x] Phase 12.1: Run one complete manual prediction test with external ComfyUI.
   - 2026-05-13 attempt: ComfyUI endpoint was reachable, but the current prediction workflow could not pass validation because the color rough Load Image placeholder node was not connected to the generation flow.
-- [ ] Phase 12.2: Run one complete manual hand reference test with external ComfyUI.
+  - 2026-05-13 rerun: After fixing the prediction workflow placeholder and image connection, the user reported that prediction generation worked.
+- [x] Phase 12.2: Run one complete manual hand reference test with external ComfyUI.
+  - 2026-05-13 rerun: After replacing hand workflow image values with selected candidate and mask placeholders, the user reported that hand reference generation worked.
 - [ ] Phase 12.3: Confirm sheet export and metadata after a full workflow.
 - [ ] Phase 12.4: Update docs with final v0.1 known issues and usage steps.
+
+## Phase 13: Output Pickup Usability
+
+- [ ] Phase 13.1: Make Load predictions import finished images from the latest saved prediction prompt ID, then refresh thumbnails.
+- [ ] Phase 13.2: Make Load hand refs import finished images from the latest saved hand reference prompt ID, then refresh thumbnails.
+- [ ] Phase 13.3: Add simple UI messages for pending generation, copied images, missing ComfyUI output files, and history lookup failures.
+- [ ] Phase 13.4: Consider optional automatic polling only after the manual Load import flow is stable.

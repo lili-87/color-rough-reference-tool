@@ -161,6 +161,8 @@ It validates supported color rough image extensions: `png`, `jpg`, `jpeg`, and `
 
 The app can queue workflows to an external ComfyUI endpoint when ComfyUI is running and the workflow JSON is valid.
 It still does not wait for generation completion or automatically copy ComfyUI outputs into the project folders.
+After the latest manual workflow fixes, prediction generation and hand reference generation have both been reported working by the user.
+Generated ComfyUI images may still need to be copied manually from the external ComfyUI output folder into `project_output/predictions/` or `project_output/hand_refs/` before pressing Load predictions or Load hand refs.
 
 ---
 
@@ -197,6 +199,42 @@ An automated test command was attempted for workflow/prediction modules, but it 
 
 ---
 
+## Phase 12 Validation Update
+
+Date: 2026-05-13
+
+What changed after the first failed prediction validation:
+
+- `workflows/prediction_workflow.json` was fixed so `{{COLOR_ROUGH_IMAGE_PATH}}` is present and connected to the img2img generation route.
+- `workflows/hand_inpainting_workflow.json` was fixed so `{{SELECTED_CANDIDATE_IMAGE_PATH}}` and `{{HAND_MASK_IMAGE_PATH}}` are present and connected to the inpainting route.
+- The user reported that prediction generation worked after the prediction workflow fix.
+- The user reported that hand reference generation worked after the hand workflow fix.
+
+Remaining manual step:
+
+- Finished ComfyUI images may still need to be copied manually into the app project folders before pressing Load predictions or Load hand refs.
+
+Next usability plan:
+
+- Add a manual output pickup flow where Load predictions and Load hand refs use the latest saved prompt ID to import finished images from ComfyUI history before refreshing thumbnails.
+- Keep automatic polling for later. The next improvement should remain a user-triggered Load action.
+
+---
+
+## Phase 13 Plan
+
+Goal:
+Make generated output pickup easier without adding cloud services, paid APIs, bundled models, or an automatic waiting loop.
+
+Planned order:
+
+1. Make Load predictions import finished images from the latest saved prediction prompt ID, then refresh thumbnails.
+2. Make Load hand refs import finished images from the latest saved hand reference prompt ID, then refresh thumbnails.
+3. Add simple messages for pending generation, copied images, missing ComfyUI output files, and history lookup failures.
+4. Consider optional automatic polling only after the manual Load import flow is stable.
+
+---
+
 ## What Should Exist in v0.1
 
 - Color rough loading
@@ -226,15 +264,15 @@ An automated test command was attempted for workflow/prediction modules, but it 
 
 ## Last Completed Task
 
-Phase 11.5:
-Added a simple beginner-friendly troubleshooting checklist to the local AI setup guide.
+Phase 12.2:
+Confirmed by user report that hand reference generation works after the hand inpainting workflow placeholders and connections were fixed.
 
 ---
 
 ## Current Next Task
 
-Phase 12.1:
-Run one complete manual prediction test with external ComfyUI after the prediction workflow is fixed to actually use the color rough image.
+Phase 12.3:
+Confirm sheet export and metadata after a full workflow.
 
 ---
 
