@@ -285,6 +285,38 @@ Planned order:
 
 ---
 
+## Phase 13.1 Prediction Output Pickup
+
+Date: 2026-05-13
+
+Goal:
+Make `Load predictions` import finished prediction images from the latest saved prediction prompt ID, then refresh the thumbnails.
+
+Result:
+Completed.
+
+What changed:
+
+- The prediction integration can now download completed prediction images reported by ComfyUI history through the existing ComfyUI endpoint's image view route.
+- `Load predictions` now checks `project_output/metadata/latest_prediction_prompt.json` once when pressed.
+- If the latest prediction prompt is complete, reported images are saved into `project_output/predictions/`.
+- After the import attempt, the UI refreshes prediction thumbnails from `project_output/predictions/`.
+- If no latest prediction prompt ID exists, `Load predictions` still behaves like a normal local folder refresh.
+- If ComfyUI history says the prompt is still running, the status message tells the user to wait and press `Load predictions` again.
+
+Scope notes:
+
+- No automatic wait loop was added.
+- No cloud/API integration was added.
+- No ComfyUI, model, or checkpoint files were bundled.
+- This is still a user-triggered manual Load action.
+
+Verification:
+
+- `python -m unittest tests.test_ui_app tests.test_comfyui_prediction`
+
+---
+
 ## What Should Exist in v0.1
 
 - Color rough loading
@@ -314,15 +346,15 @@ Planned order:
 
 ## Last Completed Task
 
-Phase 12.4:
-Documented final v0.1 usage steps, known issues, saved output locations, and the next development order.
+Phase 13.1:
+Implemented prediction output pickup from the latest saved prediction prompt ID when pressing `Load predictions`.
 
 ---
 
 ## Current Next Task
 
-Phase 13.1:
-Make Load predictions import finished images from the latest saved prediction prompt ID, then refresh thumbnails.
+Phase 13.2:
+Make Load hand refs import finished images from the latest saved hand reference prompt ID, then refresh thumbnails.
 
 ---
 

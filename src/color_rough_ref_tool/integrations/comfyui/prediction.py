@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import shutil
 from typing import Any, Callable
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -17,6 +17,7 @@ from color_rough_ref_tool.core.settings import AppSettings, normalize_comfyui_en
 
 PROMPT_ENDPOINT_PATH = "/prompt"
 HISTORY_ENDPOINT_PATH = "/history"
+VIEW_ENDPOINT_PATH = "/view"
 PREDICTION_IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".webp"})
 COLOR_ROUGH_IMAGE_PATH_PLACEHOLDER = "{{COLOR_ROUGH_IMAGE_PATH}}"
 COLOR_ROUGH_IMAGE_PLACEHOLDER = "{{COLOR_ROUGH_IMAGE}}"
@@ -69,6 +70,14 @@ class CopiedPredictionHistoryImage:
     """A ComfyUI history image copied into the project predictions folder."""
 
     source_path: Path
+    saved_path: Path
+    file_name: str
+
+
+@dataclass(frozen=True, slots=True)
+class DownloadedPredictionHistoryImage:
+    """A ComfyUI history image downloaded into the project predictions folder."""
+
     saved_path: Path
     file_name: str
 
@@ -320,6 +329,50 @@ def copy_finished_prediction_images(
     return tuple(copied)
 
 
+def download_finished_prediction_images(
+    inspection: PredictionHistoryInspection,
+    *,
+    endpoint: str,
+    predictions_dir: Path | str,
+    timeout_seconds: float = 30,
+    opener: Callable[..., Any] = urlopen,
+) -> tuple[DownloadedPredictionHistoryImage, ...]:
+    """Download completed prediction images reported by ComfyUI history."""
+
+    if not inspection.completed:
+        return ()
+
+    destination_dir = Path(predictions_dir)
+    destination_dir.mkdir(parents=True, exist_ok=True)
+
+    downloaded: list[DownloadedPredictionHistoryImage] = []
+    for image in inspection.images:
+        _validate_history_image_path_parts(image)
+        request = Request(
+            _view_url(endpoint, image),
+            method="GET",
+        )
+        try:
+            with opener(request, timeout=timeout_seconds) as response:
+                image_bytes = response.read()
+        except URLError as error:
+            raise ConnectionError(f"Could not fetch ComfyUI output image: {image.file_name}") from error
+
+        if not image_bytes:
+            raise ValueError(f"ComfyUI output image was empty: {image.file_name}")
+
+        saved_path = destination_dir / image.file_name
+        saved_path.write_bytes(image_bytes)
+        downloaded.append(
+            DownloadedPredictionHistoryImage(
+                saved_path=saved_path,
+                file_name=image.file_name,
+            )
+        )
+
+    return tuple(downloaded)
+
+
 def save_selected_prediction_candidate(
     candidate_path: Path | str,
     selected_dir: Path | str,
@@ -390,6 +443,17 @@ def _history_url(endpoint: str, prompt_id: str) -> str:
     return f"{normalize_comfyui_endpoint(endpoint)}{HISTORY_ENDPOINT_PATH}/{escaped_prompt_id}"
 
 
+def _view_url(endpoint: str, image: ComfyUIHistoryImage) -> str:
+    query = urlencode(
+        {
+            "filename": image.file_name,
+            "subfolder": image.subfolder,
+            "type": image.image_type or "output",
+        }
+    )
+    return f"{normalize_comfyui_endpoint(endpoint)}{VIEW_ENDPOINT_PATH}?{query}"
+
+
 def _history_entry_is_completed(prompt_history: dict[str, Any]) -> bool:
     status = prompt_history.get("status")
     if isinstance(status, dict) and status.get("completed") is True:
@@ -439,6 +503,11 @@ def _history_image_source_path(
     output_dir: Path,
     image: ComfyUIHistoryImage,
 ) -> Path:
+    _validate_history_image_path_parts(image)
+    return output_dir / (Path(image.subfolder) if image.subfolder else Path()) / image.file_name
+
+
+def _validate_history_image_path_parts(image: ComfyUIHistoryImage) -> None:
     file_name_path = Path(image.file_name)
     if file_name_path.name != image.file_name:
         raise ValueError(f"ComfyUI history image filename must not contain folders: {image.file_name}")
@@ -446,8 +515,6 @@ def _history_image_source_path(
     subfolder = Path(image.subfolder) if image.subfolder else Path()
     if subfolder.is_absolute() or ".." in subfolder.parts:
         raise ValueError(f"ComfyUI history image subfolder must stay inside the output folder: {image.subfolder}")
-
-    return output_dir / subfolder / image.file_name
 
 
 def _replace_color_rough_placeholders(value: Any, image_path: str) -> Any:

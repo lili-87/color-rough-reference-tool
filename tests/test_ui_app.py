@@ -33,6 +33,7 @@ from color_rough_ref_tool.ui.app import (
     format_prediction_output_result,
     format_prediction_generation_waiting_dialog,
     format_prediction_generation_waiting_status,
+    format_prediction_history_import_status,
     format_prediction_manual_load_status,
     format_prediction_prompt_queued_message,
     format_prediction_thumbnail_refresh_result,
@@ -294,6 +295,40 @@ class UiAppTest(unittest.TestCase):
 
         self.assertIn("No prediction images were found", message)
         self.assertIn("wait a little and press Load predictions again", message)
+
+    def test_format_prediction_history_import_status_reports_imported_images(self) -> None:
+        output = PredictionOutputImage(
+            path=Path("predictions/ComfyUI_00001_.png"),
+            file_name="ComfyUI_00001_.png",
+            file_size_bytes=20,
+            modified_time=2.0,
+        )
+
+        message = format_prediction_history_import_status(
+            history_checked=True,
+            history_completed=True,
+            imported_count=1,
+            refresh_result=PredictionOutputReadResult(images=(output,), messages=()),
+        )
+
+        self.assertIn("Imported 1 prediction image from ComfyUI history", message)
+        self.assertIn("Prediction thumbnails refreshed", message)
+
+    def test_format_prediction_history_import_status_reports_pending_history(self) -> None:
+        result = PredictionOutputReadResult(
+            images=(),
+            messages=("No prediction images were found in: project_output/predictions",),
+        )
+
+        message = format_prediction_history_import_status(
+            history_checked=True,
+            history_completed=False,
+            imported_count=0,
+            refresh_result=result,
+        )
+
+        self.assertIn("not finished yet", message)
+        self.assertIn("press Load predictions again", message)
 
     def test_format_selected_prediction_message_reports_file_name(self) -> None:
         output = PredictionOutputImage(

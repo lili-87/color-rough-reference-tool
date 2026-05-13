@@ -44,6 +44,9 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
     PredictionOutputImage,
     PredictionOutputReadResult,
     SavedPredictionCandidate,
+    download_finished_prediction_images,
+    fetch_latest_prediction_history,
+    inspect_prediction_history,
     load_prediction_workflow,
     read_prediction_outputs_safely,
     save_selected_prediction_candidate,
@@ -296,6 +299,34 @@ def format_prediction_manual_load_status(result: PredictionOutputReadResult) -> 
     return (
         f"{format_prediction_output_result(result)} "
         "If ComfyUI is still generating, wait a little and press Load predictions again."
+    )
+
+
+def format_prediction_history_import_status(
+    *,
+    history_checked: bool,
+    history_completed: bool,
+    imported_count: int,
+    refresh_result: PredictionOutputReadResult,
+) -> str:
+    """Return a Load predictions status after checking ComfyUI history once."""
+
+    refresh_status = format_prediction_manual_load_status(refresh_result)
+    if not history_checked:
+        return refresh_status
+    if not history_completed:
+        return (
+            "ComfyUI history says the latest prediction is not finished yet. "
+            "Wait until ComfyUI finishes, then press Load predictions again. "
+            f"{refresh_status}"
+        )
+    if imported_count == 1:
+        return f"Imported 1 prediction image from ComfyUI history. {refresh_status}"
+    if imported_count > 1:
+        return f"Imported {imported_count} prediction images from ComfyUI history. {refresh_status}"
+    return (
+        "ComfyUI history says the latest prediction is finished, but it did not report any prediction images to import. "
+        f"{refresh_status}"
     )
 
 
@@ -865,15 +896,48 @@ class ColorRoughReferenceApp:
 
         try:
             settings = self._settings_from_form()
+            output_folders = prepare_project_output(settings.default_output_dir)
+            history_checked, history_completed, imported_count = self._import_latest_prediction_history_outputs(
+                settings,
+                output_folders.metadata,
+                output_folders.predictions,
+            )
             result = self._refresh_prediction_thumbnails(settings)
-        except ValueError as error:
+        except (ConnectionError, FileNotFoundError, OSError, ValueError) as error:
             messagebox.showerror("Prediction outputs", format_error_message("load prediction outputs", error))
             return
 
-        status = format_prediction_manual_load_status(result)
+        status = format_prediction_history_import_status(
+            history_checked=history_checked,
+            history_completed=history_completed,
+            imported_count=imported_count,
+            refresh_result=result,
+        )
         self.status_message.set(status)
         if not result.ok:
             messagebox.showinfo("Prediction outputs", status)
+
+    def _import_latest_prediction_history_outputs(
+        self,
+        settings: AppSettings,
+        metadata_dir: Path,
+        predictions_dir: Path,
+    ) -> tuple[bool, bool, int]:
+        try:
+            history = fetch_latest_prediction_history(settings, metadata_dir)
+        except FileNotFoundError:
+            return False, False, 0
+
+        inspection = inspect_prediction_history(history)
+        if not inspection.completed:
+            return True, False, 0
+
+        imported = download_finished_prediction_images(
+            inspection,
+            endpoint=settings.comfyui_endpoint,
+            predictions_dir=predictions_dir,
+        )
+        return True, True, len(imported)
 
     def _refresh_prediction_thumbnails(self, settings: AppSettings) -> PredictionOutputReadResult:
         output_folders = prepare_project_output(settings.default_output_dir)

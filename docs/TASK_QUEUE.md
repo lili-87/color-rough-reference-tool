@@ -118,7 +118,8 @@ Codex should work on the next unfinished task only unless the user says otherwis
 
 ## Phase 13: Output Pickup Usability
 
-- [ ] Phase 13.1: Make Load predictions import finished images from the latest saved prediction prompt ID, then refresh thumbnails.
+- [x] Phase 13.1: Make Load predictions import finished images from the latest saved prediction prompt ID, then refresh thumbnails.
+  - 2026-05-13 update: `Load predictions` now checks the saved latest prediction prompt ID once, downloads completed prediction images reported by ComfyUI history through the existing endpoint, saves them into `project_output/predictions/`, and refreshes thumbnails.
 - [ ] Phase 13.2: Make Load hand refs import finished images from the latest saved hand reference prompt ID, then refresh thumbnails.
 - [ ] Phase 13.3: Add simple UI messages for pending generation, copied images, missing ComfyUI output files, and history lookup failures.
 - [ ] Phase 13.4: Consider optional automatic polling only after the manual Load import flow is stable.

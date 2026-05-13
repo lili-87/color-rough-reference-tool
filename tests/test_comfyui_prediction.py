@@ -9,6 +9,7 @@ from color_rough_ref_tool.integrations.comfyui.prediction import (
     ComfyUIHistoryImage,
     PredictionHistoryInspection,
     copy_finished_prediction_images,
+    download_finished_prediction_images,
     fetch_comfyui_history,
     fetch_latest_prediction_history,
     inject_color_rough_path,
@@ -38,6 +39,20 @@ class FakeResponse:
 
     def read(self) -> bytes:
         return json.dumps(self.payload).encode("utf-8")
+
+
+class FakeBytesResponse:
+    def __init__(self, payload: bytes) -> None:
+        self.payload = payload
+
+    def __enter__(self) -> "FakeBytesResponse":
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        return None
+
+    def read(self) -> bytes:
+        return self.payload
 
 
 class ComfyUIPredictionTest(unittest.TestCase):
@@ -319,6 +334,73 @@ class ComfyUIPredictionTest(unittest.TestCase):
                     comfyui_output_dir=comfyui_output_dir,
                     predictions_dir=predictions_dir,
                 )
+
+    def test_download_finished_prediction_images_fetches_view_images(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            predictions_dir = Path(temp_dir) / "project_output" / "predictions"
+            captured: dict[str, object] = {}
+            inspection = PredictionHistoryInspection(
+                prompt_id="prediction-010",
+                completed=True,
+                images=(
+                    ComfyUIHistoryImage(
+                        file_name="ComfyUI_00005_.png",
+                        subfolder="roughref output",
+                        image_type="output",
+                    ),
+                ),
+            )
+
+            def opener(request: object, timeout: float) -> FakeBytesResponse:
+                captured["url"] = request.full_url
+                captured["timeout"] = timeout
+                captured["method"] = request.get_method()
+                return FakeBytesResponse(b"downloaded prediction bytes")
+
+            downloaded = download_finished_prediction_images(
+                inspection,
+                endpoint="http://127.0.0.1:8188/",
+                predictions_dir=predictions_dir,
+                timeout_seconds=9,
+                opener=opener,
+            )
+
+            self.assertEqual(len(downloaded), 1)
+            self.assertEqual(downloaded[0].saved_path, predictions_dir / "ComfyUI_00005_.png")
+            self.assertEqual(downloaded[0].saved_path.read_bytes(), b"downloaded prediction bytes")
+        self.assertEqual(
+            captured["url"],
+            "http://127.0.0.1:8188/view?filename=ComfyUI_00005_.png&subfolder=roughref+output&type=output",
+        )
+        self.assertEqual(captured["timeout"], 9)
+        self.assertEqual(captured["method"], "GET")
+
+    def test_download_finished_prediction_images_skips_pending_history(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            predictions_dir = Path(temp_dir) / "project_output" / "predictions"
+            inspection = PredictionHistoryInspection(
+                prompt_id="prediction-011",
+                completed=False,
+                images=(
+                    ComfyUIHistoryImage(
+                        file_name="ComfyUI_00006_.png",
+                        subfolder="",
+                        image_type="output",
+                    ),
+                ),
+            )
+
+            downloaded = download_finished_prediction_images(
+                inspection,
+                endpoint="http://127.0.0.1:8188",
+                predictions_dir=predictions_dir,
+                opener=lambda request, timeout: FakeBytesResponse(b"unused"),
+            )
+
+        self.assertEqual(downloaded, ())
+        self.assertFalse(predictions_dir.exists())
 
     def test_inject_color_rough_path_replaces_nested_placeholders(self) -> None:
         TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
