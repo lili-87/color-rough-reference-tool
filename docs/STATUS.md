@@ -384,6 +384,76 @@ Verification:
 
 ---
 
+## Phase 13.4 Automatic Polling Decision
+
+Date: 2026-05-13
+
+Goal:
+Consider whether automatic polling should be added now that the manual Load import flow is available.
+
+Decision:
+Do not add automatic polling for v0.1.
+
+Reason:
+
+- The manual `Load predictions` and `Load hand refs` flow is now understandable and stable enough as the default.
+- Automatic polling would add background ComfyUI requests that are harder for beginners to see and reason about.
+- Different ComfyUI workflows can take very different amounts of time and can save outputs in slightly different ways.
+- A user-triggered Load action makes recovery simpler when ComfyUI is still generating, has failed, or reports no output images.
+
+Future rule:
+If automatic polling is added later, it should be opt-in, visible in the UI, stoppable, limited to the latest saved prompt ID, and backed by the manual Load buttons as a fallback.
+
+What changed:
+
+- `docs/ROADMAP.md` now records the Phase 13.4 decision and adds a future optional polling evaluation phase.
+- `docs/LOCAL_AI_SETUP_GUIDE.md` now explains that automatic polling is intentionally deferred and that manual Load remains the stable v0.1 flow.
+- No code changes were made.
+
+Verification:
+
+- Documentation-only change. Automated tests were not run.
+
+---
+
+## Phase 14.1 Optional Polling Re-evaluation
+
+Date: 2026-05-13
+
+Goal:
+Revisit whether automatic polling should be implemented after the manual Load import flow became stable.
+
+Decision:
+Do not implement automatic polling yet.
+
+Reason:
+
+- The current manual `Load predictions` and `Load hand refs` flow is simple and visible.
+- The app already explains pending generation, successful imports, missing output images, and history lookup failures.
+- Automatic polling would add background behavior before there is enough real-use evidence that it solves a frequent problem.
+- The next useful step is to run the app through real drawing-support sessions and record where the user hesitates.
+
+Minimum future polling specification:
+
+- Off by default.
+- Opt-in from a visible UI control.
+- Checks only the latest saved prompt ID.
+- Stops after images are imported, after a short timeout, when ComfyUI is unreachable, when another generation starts, or when the user stops it.
+- Manual `Load predictions` and `Load hand refs` remain available as the reliable fallback.
+
+What changed:
+
+- `docs/ROADMAP.md` now records the Phase 14.1 evaluation and a minimal future polling specification.
+- `docs/LOCAL_AI_SETUP_GUIDE.md` now notes that polling is still not recommended for the current version.
+- `docs/TASK_QUEUE.md` now moves the next work to real-use stabilization.
+- No code changes were made.
+
+Verification:
+
+- Documentation-only change. Automated tests were not run.
+
+---
+
 ## What Should Exist in v0.1
 
 - Color rough loading
@@ -413,15 +483,15 @@ Verification:
 
 ## Last Completed Task
 
-Phase 13.3:
-Improved user-facing output pickup messages for pending generation, imported images, missing history images, and history/output download failures.
+Phase 14.1:
+Re-evaluated automatic polling and decided not to implement it yet; recorded the minimum future specification.
 
 ---
 
 ## Current Next Task
 
-Phase 13.4:
-Consider optional automatic polling only after the manual Load import flow is stable.
+Phase 15.1:
+Run one real end-to-end workflow and record practical friction points before adding new automation.
 
 ---
 

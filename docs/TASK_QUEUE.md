@@ -124,4 +124,14 @@ Codex should work on the next unfinished task only unless the user says otherwis
   - 2026-05-13 update: `Load hand refs` now checks the saved latest hand reference prompt ID once, downloads completed hand reference images reported by ComfyUI history through the existing endpoint, saves them into `project_output/hand_refs/`, and refreshes thumbnails.
 - [x] Phase 13.3: Add simple UI messages for pending generation, copied images, missing ComfyUI output files, and history lookup failures.
   - 2026-05-13 update: Improved Load prediction/hand reference status text for missing prompt IDs, pending ComfyUI history, imported images, completed history with no listed images, and history/output download failures.
-- [ ] Phase 13.4: Consider optional automatic polling only after the manual Load import flow is stable.
+- [x] Phase 13.4: Consider optional automatic polling only after the manual Load import flow is stable.
+  - 2026-05-13 decision: Do not add automatic polling for v0.1. Keep manual Load as the stable default, and defer any polling to a later opt-in, visible, stoppable helper that only checks the latest saved prompt ID.
+
+## Phase 14: Optional Polling Evaluation
+
+- [x] Phase 14.1: Revisit optional automatic polling after more real workflow use.
+  - 2026-05-13 decision: Do not implement automatic polling yet. Revisit only if real use shows that pressing Load manually is a frequent source of mistakes or frustration. Future polling must be opt-in, visible, stoppable, and limited to the latest saved prompt ID.
+
+## Phase 15: v0.1 Real Use Stabilization
+
+- [ ] Phase 15.1: Run one real end-to-end workflow and record practical friction points before adding new automation.

@@ -245,6 +245,7 @@ These are known limitations of the current v0.1 validation state.
 - Hand reference quality depends heavily on the selected candidate, mask shape, inpainting workflow, and model choice.
 - Manual mask editing is intentionally simple. Automatic hand detection is not part of v0.1.
 - Advanced project management, multiple named projects, and automatic background polling are not part of v0.1.
+- Automatic polling was considered after the manual Load flow became available, but it is intentionally deferred. For now, press Load predictions or Load hand refs after ComfyUI finishes.
 
 Recommended first working setup:
 
@@ -304,7 +305,7 @@ These are intentionally left for later app-side tasks:
 
 - automatic waiting for ComfyUI generation to finish
 - fully automatic polling after generation
-- a polished one-click output pickup flow for every workflow shape
+- a polished output pickup flow for every workflow shape
 - proving final image quality or artistic correctness
 - advanced workflow editing
 - cloud GPU support
@@ -315,13 +316,18 @@ These are intentionally left for later app-side tasks:
 
 ## 11. Current Next Development Order
 
-After v0.1 validation, continue in this order:
+After v0.1 validation and Phase 13 output pickup work:
 
 ```text
-1. Make Load predictions import finished images from the latest saved prediction prompt ID.
-2. Make Load hand refs import finished images from the latest saved hand reference prompt ID.
-3. Add clearer messages when generation is still pending or output files cannot be found.
-4. Consider automatic polling only after the manual Load flow is stable.
+1. Keep the manual Load predictions / Load hand refs flow as the stable default.
+2. Use more real projects to confirm workflow output behavior.
+3. Consider optional polling later only if repeated manual Load presses become a real usability problem.
+4. If polling is added later, make it opt-in, visible, stoppable, and limited to the latest saved prompt ID.
 ```
+
+Phase 14.1 re-evaluation:
+Automatic polling is still not recommended for the current version.
+The next useful step is to use the app on a real drawing workflow and write down where the user gets stuck.
+If the main repeated problem is "I forget to press Load after generation finishes," then optional polling can be reconsidered.
 
 Do not add paid APIs, cloud GPU settings, bundled models, local reference search, or Blender / 3D work during this initial version.

@@ -235,6 +235,56 @@ Tasks:
 Completion condition:
 After ComfyUI finishes generation, the user can press Load predictions or Load hand refs and the app copies the finished images into the project output folders automatically.
 
+Phase 13.4 decision:
+The manual Load import flow is stable enough for v0.1, but automatic polling is deferred.
+Keep the user-triggered Load flow as the default because it is easier to understand, avoids background requests to ComfyUI, and is safer while workflow output behavior still varies.
+If polling is added later, it should be opt-in, visibly stoppable, and limited to checking the latest saved prompt ID for a short time after the user presses Regenerate.
+
+---
+
+## Phase 14: Optional Polling Evaluation
+
+Goal:
+Consider a small opt-in helper that checks ComfyUI history for a short time after generation is queued.
+
+Phase 14.1 evaluation:
+Do not implement automatic polling yet.
+The current manual Load flow is clear, recoverable, and safer for the first local version.
+Polling should only be revisited after repeated real use shows that pressing Load manually is a frequent source of mistakes or frustration.
+
+Possible tasks:
+- Add a visible "Check automatically after regenerate" option, disabled by default
+- Poll only the latest saved prompt ID
+- Stop polling after images are imported, after a timeout, or when the user starts a different action
+- Keep manual Load buttons available as the reliable fallback
+
+Minimum future specification:
+- Default: off
+- Scope: latest saved prompt ID only
+- Interval: slow enough to avoid noisy background requests, for example every few seconds
+- Stop conditions: image import succeeds, user presses another generation button, user closes the app, ComfyUI becomes unreachable, or a short timeout is reached
+- UI requirement: show that automatic checking is active and let the user stop it
+- Fallback: manual Load predictions and Load hand refs must always remain available
+
+Completion condition:
+Automatic polling, if added, remains a small convenience layer and does not replace the manual Load workflow.
+
+---
+
+## Phase 15: v0.1 Real Use Stabilization
+
+Goal:
+Use the app in a small number of real drawing-support sessions and record practical friction points before adding new automation.
+
+Tasks:
+- Run one real end-to-end workflow and record where the user hesitates
+- Check whether manual Load is acceptable in practice
+- Check whether workflow setup guidance is understandable without Codex help
+- Prioritize only fixes that reduce confusion in the existing local workflow
+
+Completion condition:
+The next improvements are based on real usage friction, not speculation.
+
 ---
 
 ## Not Planned for Initial Version
