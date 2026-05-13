@@ -129,7 +129,9 @@ The minimal UI now shows a compact project summary with the current output folde
 The minimal UI now has a `Check workflows` button that locally validates required workflow placeholders without connecting to ComfyUI.
 The workflow check now also warns when the prediction color rough image placeholder is on a node that does not appear to be connected to the rest of the ComfyUI API workflow.
 ComfyUI workflow requirements are now documented in `docs/COMFYUI_WORKFLOW_REQUIREMENTS.md`, including required placeholders and expected output folders.
+The prediction workflow requirements now document the minimum recommended img2img route and a ControlNet-style route so the color rough image is actually used by generation.
 Local AI setup guidance is now documented in `docs/LOCAL_AI_SETUP_GUIDE.md`.
+The local AI setup guide now explains what to do when the app warns that the color rough image node is not connected.
 The post-AI setup implementation plan is now documented in `docs/ROADMAP.md` and `docs/TASK_QUEUE.md`.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
@@ -172,15 +174,15 @@ It still does not wait for generation completion or automatically copy ComfyUI o
 
 ## Last Completed Task
 
-Phase 9.1:
-Added a local workflow check that warns when the prediction color rough image input node is not connected to another node.
+Phase 9.2:
+Documented the minimum recommended prediction workflow structure for img2img or ControlNet.
 
 ---
 
 ## Current Next Task
 
-Phase 9.2:
-Document the minimum recommended prediction workflow structure for img2img or ControlNet.
+Phase 9.3:
+Verify that the hand inpainting workflow actually uses both selected candidate and mask image.
 
 ---
 

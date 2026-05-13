@@ -101,6 +101,45 @@ It must also contain one hand-mask placeholder:
 Save the exported workflow JSON files and select them in the app.
 Then press `Check workflows`.
 
+For the prediction workflow, the color rough image must be connected into the actual generation route.
+If `Check workflows` says the color rough image node may not be connected, the workflow probably has a `Load Image` node sitting by itself.
+
+Beginner-friendly img2img route:
+
+```text
+1. Add or use a Load Image node.
+2. Put {{COLOR_ROUGH_IMAGE_PATH}} in that Load Image node's image value after exporting API JSON.
+3. Connect Load Image to VAE Encode.
+4. Connect VAE Encode to KSampler latent_image.
+5. Connect KSampler to VAE Decode.
+6. Connect VAE Decode to Save Image.
+7. Export the workflow in API format again.
+8. Save it as workflows/prediction_workflow.json.
+9. Press Check workflows in this app.
+```
+
+Suggested first denoise value:
+
+```text
+0.55
+```
+
+If the result follows the rough too strongly, raise denoise a little.
+If the result ignores the rough, lower denoise or use ControlNet.
+
+ControlNet route:
+
+```text
+Load Image with {{COLOR_ROUGH_IMAGE_PATH}}
+↓
+ControlNet-related nodes
+↓
+KSampler conditioning
+```
+
+ControlNet is useful later, but it requires extra models and sometimes extra ComfyUI nodes.
+Do not put those models inside this app folder.
+
 ---
 
 ## 5. Expected Output Folders

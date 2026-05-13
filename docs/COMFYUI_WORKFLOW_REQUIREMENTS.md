@@ -40,6 +40,56 @@ The prediction workflow must contain one of these placeholder strings where the 
 
 When the app queues prediction generation, it replaces those strings with the selected color rough image path.
 
+The placeholder must be on an image input node that is connected to the generation flow.
+It is not enough to add a separate unused `Load Image` node.
+
+Minimum recommended img2img structure:
+
+```text
+Load Image
+  image: {{COLOR_ROUGH_IMAGE_PATH}}
+↓
+VAE Encode
+↓
+KSampler latent_image
+↓
+VAE Decode
+↓
+Save Image
+```
+
+In this structure, the color rough is used as the starting image.
+The `KSampler` denoise value controls how strongly the result changes:
+
+```text
+0.35 - 0.55: keeps the rough closer
+0.60 - 0.80: changes the rough more
+1.00: behaves closer to txt2img and may ignore the rough
+```
+
+Minimum recommended ControlNet-style structure:
+
+```text
+Load Image
+  image: {{COLOR_ROUGH_IMAGE_PATH}}
+↓
+ControlNet preprocessor or ControlNet Apply node
+↓
+positive conditioning used by KSampler
+↓
+KSampler
+↓
+VAE Decode
+↓
+Save Image
+```
+
+Use this when the color rough should guide composition, pose, edges, or color placement.
+The exact ControlNet nodes depend on the user's installed ComfyUI nodes and models.
+
+For the initial version, img2img is the simpler recommended path.
+ControlNet can be added later if the user needs stronger structure control.
+
 Expected output location:
 
 ```text
@@ -107,6 +157,10 @@ The app can queue workflows and read output folders, but it does not yet:
 - use paid APIs or cloud GPU services
 
 For now, generated files must appear in the expected project output folders before the app can show them.
+
+The app can warn when the color rough placeholder node is clearly unconnected.
+However, it cannot judge image quality or prove that a connected workflow uses the color rough effectively.
+That must be confirmed by a real generation test.
 
 ---
 
