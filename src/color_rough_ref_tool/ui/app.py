@@ -20,6 +20,7 @@ from color_rough_ref_tool.core.mask_image import (
 )
 from color_rough_ref_tool.core.hand_reference_sheet import export_hand_reference_sheet
 from color_rough_ref_tool.core.project_output import prepare_project_output
+from color_rough_ref_tool.core.prompt_metadata import save_latest_prediction_prompt_metadata
 from color_rough_ref_tool.core.selection_metadata import (
     SelectedCandidateMetadata,
     load_selected_candidate_metadata,
@@ -700,20 +701,25 @@ class ColorRoughReferenceApp:
 
         try:
             settings = self._settings_from_form()
+            output_folders = prepare_project_output(settings.default_output_dir)
             result = trigger_prediction_workflow(
                 settings,
                 color_rough_path=color_rough_path,
                 client_id="color-rough-ref-tool-ui",
+            )
+            prompt_metadata_path = save_latest_prediction_prompt_metadata(
+                result.prompt_id,
+                output_folders.metadata,
             )
         except (ConnectionError, FileNotFoundError, OSError, ValueError) as error:
             messagebox.showerror("Prediction generation", format_error_message("queue prediction generation", error))
             return
 
         message = format_prediction_prompt_queued_message(result)
-        self.status_message.set(message)
+        self.status_message.set(f"{message} | saved prompt ID: {prompt_metadata_path.as_posix()}")
         messagebox.showinfo(
             "Prediction generation",
-            f"Prediction workflow was queued.\n\nPrompt ID:\n{result.prompt_id}",
+            f"Prediction workflow was queued.\n\nPrompt ID:\n{result.prompt_id}\n\nSaved:\n{prompt_metadata_path}",
         )
 
     def load_prediction_outputs(self) -> None:
