@@ -454,6 +454,39 @@ Verification:
 
 ---
 
+## Phase 15.1 v0.1 Completion Checklist
+
+Date: 2026-05-13
+
+Goal:
+Create the practical end-to-end confirmation items and v0.1 completion judgment checklist before doing more automation or feature work.
+
+Result:
+Completed.
+
+What changed:
+
+- Added `docs/V0_1_COMPLETION_CHECKLIST.md`.
+- The new checklist defines the full real-use flow from starting external ComfyUI through exporting a hand reference sheet.
+- The checklist lists the folders and metadata files that should exist after a successful run.
+- The checklist includes beginner-focused friction questions for places where the user may hesitate.
+- The checklist defines must-pass v0.1 completion criteria and acceptable v0.1 limitations.
+- `docs/ROADMAP.md` now treats Phase 15 as the v0.1 real-use stabilization and completion-decision phase.
+- `docs/TASK_QUEUE.md` now splits Phase 15 into checklist creation, real end-to-end run, blocking confusion fixes, and final v0.1 decision.
+
+Scope notes:
+
+- No code changes were made.
+- No automatic polling was added.
+- No cloud/API integration was added.
+- No ComfyUI, model, or checkpoint files were bundled.
+
+Verification:
+
+- Documentation-only change. Automated tests were not run.
+
+---
+
 ## What Should Exist in v0.1
 
 - Color rough loading
@@ -483,15 +516,15 @@ Verification:
 
 ## Last Completed Task
 
-Phase 14.1:
-Re-evaluated automatic polling and decided not to implement it yet; recorded the minimum future specification.
+Phase 15.1:
+Created the v0.1 end-to-end confirmation checklist and completion criteria.
 
 ---
 
 ## Current Next Task
 
-Phase 15.1:
-Run one real end-to-end workflow and record practical friction points before adding new automation.
+Phase 15.2:
+Run one real end-to-end workflow using the v0.1 checklist and record practical friction points.
 
 ---
 

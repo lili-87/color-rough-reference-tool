@@ -134,4 +134,8 @@ Codex should work on the next unfinished task only unless the user says otherwis
 
 ## Phase 15: v0.1 Real Use Stabilization
 
-- [ ] Phase 15.1: Run one real end-to-end workflow and record practical friction points before adding new automation.
+- [x] Phase 15.1: Create the real end-to-end confirmation checklist and v0.1 completion criteria.
+  - 2026-05-13 update: Added `docs/V0_1_COMPLETION_CHECKLIST.md` with the full manual end-to-end check, output folders, friction log template, and v0.1 pass/fail criteria.
+- [ ] Phase 15.2: Run one real end-to-end workflow using the v0.1 checklist and record practical friction points.
+- [ ] Phase 15.3: Fix only blocking documentation or UI-message confusion found during the real end-to-end check.
+- [ ] Phase 15.4: Record the final v0.1 decision and mark whether the current app is complete enough for v0.1.

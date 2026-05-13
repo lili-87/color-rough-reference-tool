@@ -274,16 +274,19 @@ Automatic polling, if added, remains a small convenience layer and does not repl
 ## Phase 15: v0.1 Real Use Stabilization
 
 Goal:
-Use the app in a small number of real drawing-support sessions and record practical friction points before adding new automation.
+Use the app in real drawing-support sessions, decide whether it is good enough for v0.1, and record practical friction points before adding new automation.
 
 Tasks:
-- Run one real end-to-end workflow and record where the user hesitates
-- Check whether manual Load is acceptable in practice
-- Check whether workflow setup guidance is understandable without Codex help
-- Prioritize only fixes that reduce confusion in the existing local workflow
+- Create an end-to-end confirmation checklist and v0.1 completion criteria.
+- Run one real end-to-end workflow using the checklist.
+- Record where the user hesitates or needs Codex help.
+- Check whether manual Load is acceptable in practice.
+- Check whether workflow setup guidance is understandable without Codex help.
+- Fix only blocking confusion in the existing local workflow.
+- Mark v0.1 complete only after the checklist passes or remaining issues are clearly non-blocking.
 
 Completion condition:
-The next improvements are based on real usage friction, not speculation.
+The v0.1 completion decision is based on the documented checklist and real usage friction, not speculation.
 
 ---
 
