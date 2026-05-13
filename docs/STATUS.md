@@ -144,6 +144,7 @@ The minimal UI now has a `Check workflows` button that locally validates require
 The workflow check now also warns when the prediction color rough image placeholder is on a node that does not appear to be connected to the rest of the ComfyUI API workflow.
 The workflow check now also warns when the hand inpainting selected candidate image or hand mask image placeholder is on a node that does not appear to be connected to the hand inpainting workflow.
 Workflow mismatch warnings now explain that ComfyUI may accept the prompt even when disconnected image input nodes are ignored, and tell the user to reconnect nodes and export the API workflow again.
+Workflow mismatch warnings now also explain that the placeholder may be on an isolated Load Image node and that the image or mask node must be connected to the actual KSampler, img2img, ControlNet, or inpainting route.
 ComfyUI workflow requirements are now documented in `docs/COMFYUI_WORKFLOW_REQUIREMENTS.md`, including required placeholders and expected output folders.
 The prediction workflow requirements now document the minimum recommended img2img route and a ControlNet-style route so the color rough image is actually used by generation.
 Local AI setup guidance is now documented in `docs/LOCAL_AI_SETUP_GUIDE.md`.
@@ -190,15 +191,15 @@ It still does not wait for generation completion or automatically copy ComfyUI o
 
 ## Last Completed Task
 
-Phase 11.2:
-Added clearer beginner-friendly guidance when ComfyUI is not running or unreachable.
+Phase 11.3:
+Added clearer beginner-friendly workflow mismatch messages when placeholders exist but image inputs may be disconnected.
 
 ---
 
 ## Current Next Task
 
-Phase 11.3:
-Add clearer message when workflow placeholders are present but image input is not connected in the workflow.
+Phase 11.4:
+Add guard message before hand reference generation if selected candidate or mask is missing.
 
 ---
 

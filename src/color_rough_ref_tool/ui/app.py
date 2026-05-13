@@ -219,7 +219,8 @@ def format_workflow_validation_message(
     ):
         return (
             "Workflow placeholders exist, but the image inputs may be ignored.\n"
-            "Connect the listed image nodes in ComfyUI, export the API workflow again, then check again:\n"
+            "This usually means the placeholder is on a Load Image node that is sitting by itself, or the image/mask node is not wired into KSampler, img2img, ControlNet, or inpainting.\n"
+            "Open the workflow in ComfyUI, connect the listed image nodes to the actual generation route, export the API workflow JSON again, then press Check workflows again:\n"
             + "\n".join(messages)
         )
     return "Please fix workflow placeholders:\n" + "\n".join(messages)

@@ -176,7 +176,9 @@ class UiAppTest(unittest.TestCase):
         )
 
         self.assertIn("Workflow placeholders exist, but the image inputs may be ignored.", message)
-        self.assertIn("export the API workflow again", message)
+        self.assertIn("Load Image node that is sitting by itself", message)
+        self.assertIn("actual generation route", message)
+        self.assertIn("export the API workflow JSON again", message)
         self.assertIn("Prediction workflow warning:", message)
 
     def test_format_workflow_validation_message_reports_hand_warning(self) -> None:
@@ -188,7 +190,8 @@ class UiAppTest(unittest.TestCase):
         )
 
         self.assertIn("Workflow placeholders exist, but the image inputs may be ignored.", message)
-        self.assertIn("Connect the listed image nodes", message)
+        self.assertIn("KSampler, img2img, ControlNet, or inpainting", message)
+        self.assertIn("press Check workflows again", message)
         self.assertIn("Hand inpainting workflow warning:", message)
 
     def test_format_prediction_output_count_reports_count(self) -> None:
