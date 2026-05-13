@@ -221,6 +221,34 @@ Next usability plan:
 
 ---
 
+## Phase 12.3 Sheet and Metadata Check
+
+Date: 2026-05-13
+
+Goal:
+Confirm that saved results from the full workflow can produce a hand reference sheet and the basic project metadata files.
+
+Result:
+Passed.
+
+What was confirmed:
+
+- `project_output/predictions/` contains 2 prediction images.
+- `project_output/selected/` contains the saved selected candidate `ComfyUI_00002_.png`.
+- `project_output/masks/` contains the matching saved mask `ComfyUI_00002__hand_mask.png`.
+- `project_output/hand_refs/` contains 4 hand reference images.
+- `project_output/sheets/hand_sheet_001.png` was exported successfully.
+- `project_output/metadata/project.json` was saved.
+- `project_output/metadata/predictions.json` was saved.
+- `project_output/metadata/hand_refs.json` was saved.
+- `project_output/metadata/settings_snapshot.json` was saved.
+- Existing latest prompt ID metadata files are still present for prediction and hand reference history checks.
+
+Remaining note:
+The app can create the needed sheet and metadata from saved local files, but output pickup from ComfyUI is still a manual load/import usability area planned for Phase 13.
+
+---
+
 ## Phase 13 Plan
 
 Goal:
@@ -264,15 +292,15 @@ Planned order:
 
 ## Last Completed Task
 
-Phase 12.2:
-Confirmed by user report that hand reference generation works after the hand inpainting workflow placeholders and connections were fixed.
+Phase 12.3:
+Confirmed that a completed local workflow has prediction images, a selected candidate, a saved mask, hand reference images, exported sheet output, and the core metadata files.
 
 ---
 
 ## Current Next Task
 
-Phase 12.3:
-Confirm sheet export and metadata after a full workflow.
+Phase 12.4:
+Update docs with final v0.1 known issues and usage steps.
 
 ---
 
