@@ -98,7 +98,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 
 ## Phase 11: Beginner-Friendly Generation Flow
 
-- [ ] Phase 11.1: Add simple waiting/status messages for queued generation.
+- [x] Phase 11.1: Add simple waiting/status messages for queued generation.
 - [ ] Phase 11.2: Add clearer message when ComfyUI is not running or unreachable.
 - [ ] Phase 11.3: Add clearer message when workflow placeholders are present but image input is not connected in the workflow.
 - [ ] Phase 11.4: Add guard message before hand reference generation if selected candidate or mask is missing.

@@ -108,6 +108,8 @@ The prediction integration can now fetch ComfyUI history once for a prompt ID, i
 The prediction integration can now inspect ComfyUI history to detect whether a prediction prompt is completed and list reported prediction image outputs.
 The prediction integration can now copy completed prediction images reported by ComfyUI history from a ComfyUI output folder into `project_output/predictions`.
 The minimal UI can now refresh prediction thumbnails from `project_output/predictions` after copied prediction outputs are available.
+After queueing prediction generation, the minimal UI now explains that ComfyUI is generating, the prompt ID was saved for history checking, and the user should press Load predictions after ComfyUI finishes.
+If prediction images are not available during manual loading, the UI now explains that generation may still be running and the user can wait and press Load predictions again.
 Missing, empty, or invalid prediction output folders are now handled with simple status messages instead of crashing the UI.
 The minimal UI can now select one loaded prediction candidate with a radio button and show the selected file name in the status area.
 The minimal UI can now copy the selected prediction candidate into `project_output/selected` while keeping the original file name.
@@ -130,6 +132,8 @@ Images that Tkinter can preview are shown as small thumbnails; unsupported previ
 The minimal UI can now refresh hand reference thumbnails from `project_output/hand_refs` after copied hand reference outputs are available.
 The minimal UI can now queue the hand inpainting workflow again from the saved selected candidate and saved hand mask.
 After queueing a hand inpainting workflow, the minimal UI now saves the latest hand reference prompt ID to `project_output/metadata/latest_hand_reference_prompt.json`.
+After queueing hand reference generation, the minimal UI now explains that ComfyUI is generating, the prompt ID was saved for history checking, and the user should press Load hand refs after ComfyUI finishes.
+If hand reference images are not available during manual loading, the UI now explains that generation may still be running and the user can wait and press Load hand refs again.
 Missing, empty, or invalid hand reference output folders are now handled with simple status messages instead of crashing the UI.
 The minimal UI can now export a simple hand reference sheet and show the saved sheet path after export.
 The minimal UI now reopens the configured project output on startup, reloads saved prediction and hand reference thumbnails, and restores the saved selected candidate preview when possible.
@@ -185,15 +189,15 @@ It still does not wait for generation completion or automatically copy ComfyUI o
 
 ## Last Completed Task
 
-Phase 10.9:
-Added minimal UI refresh handling for hand reference thumbnails after copied outputs are available.
+Phase 11.1:
+Added simple queued-generation waiting and manual-load status messages.
 
 ---
 
 ## Current Next Task
 
-Phase 11.1:
-Add simple waiting/status messages for queued generation.
+Phase 11.2:
+Add clearer message when ComfyUI is not running or unreachable.
 
 ---
 

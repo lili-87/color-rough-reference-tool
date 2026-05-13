@@ -19,6 +19,9 @@ from color_rough_ref_tool.ui.app import (
     format_configuration_message,
     format_error_message,
     format_exported_hand_reference_sheet_message,
+    format_hand_reference_generation_waiting_dialog,
+    format_hand_reference_generation_waiting_status,
+    format_hand_reference_manual_load_status,
     format_hand_reference_output_count,
     format_hand_reference_output_result,
     format_hand_reference_prompt_queued_message,
@@ -27,6 +30,9 @@ from color_rough_ref_tool.ui.app import (
     format_thumbnail_file_size,
     format_prediction_output_count,
     format_prediction_output_result,
+    format_prediction_generation_waiting_dialog,
+    format_prediction_generation_waiting_status,
+    format_prediction_manual_load_status,
     format_prediction_prompt_queued_message,
     format_prediction_thumbnail_refresh_result,
     format_mask_candidate_message,
@@ -241,6 +247,47 @@ class UiAppTest(unittest.TestCase):
             "Queued prediction workflow: prompt-001",
         )
 
+    def test_format_prediction_generation_waiting_status_explains_next_manual_step(self) -> None:
+        result = ComfyUIPromptResult(
+            prompt_id="prompt-001",
+            response={"prompt_id": "prompt-001"},
+        )
+
+        message = format_prediction_generation_waiting_status(
+            result,
+            Path("project_output/metadata/latest_prediction_prompt.json"),
+        )
+
+        self.assertIn("ComfyUI is generating", message)
+        self.assertIn("press Load predictions", message)
+        self.assertIn("Prompt ID saved for history check", message)
+
+    def test_format_prediction_generation_waiting_dialog_explains_manual_loading(self) -> None:
+        result = ComfyUIPromptResult(
+            prompt_id="prompt-001",
+            response={"prompt_id": "prompt-001"},
+        )
+
+        message = format_prediction_generation_waiting_dialog(
+            result,
+            Path("project_output/metadata/latest_prediction_prompt.json"),
+        )
+
+        self.assertIn("Saved for history check", message)
+        self.assertIn("Wait until ComfyUI finishes", message)
+        self.assertIn("Press Load predictions", message)
+
+    def test_format_prediction_manual_load_status_explains_empty_generation_state(self) -> None:
+        result = PredictionOutputReadResult(
+            images=(),
+            messages=("No prediction images were found in: project_output/predictions",),
+        )
+
+        message = format_prediction_manual_load_status(result)
+
+        self.assertIn("No prediction images were found", message)
+        self.assertIn("wait a little and press Load predictions again", message)
+
     def test_format_selected_prediction_message_reports_file_name(self) -> None:
         output = PredictionOutputImage(
             path=Path("predictions/pred_002.png"),
@@ -323,6 +370,47 @@ class UiAppTest(unittest.TestCase):
             format_hand_reference_prompt_queued_message(result),
             "Queued hand reference workflow: hand-001",
         )
+
+    def test_format_hand_reference_generation_waiting_status_explains_next_manual_step(self) -> None:
+        result = ComfyUIPromptResult(
+            prompt_id="hand-001",
+            response={"prompt_id": "hand-001"},
+        )
+
+        message = format_hand_reference_generation_waiting_status(
+            result,
+            Path("project_output/metadata/latest_hand_reference_prompt.json"),
+        )
+
+        self.assertIn("ComfyUI is generating", message)
+        self.assertIn("press Load hand refs", message)
+        self.assertIn("Prompt ID saved for history check", message)
+
+    def test_format_hand_reference_generation_waiting_dialog_explains_manual_loading(self) -> None:
+        result = ComfyUIPromptResult(
+            prompt_id="hand-001",
+            response={"prompt_id": "hand-001"},
+        )
+
+        message = format_hand_reference_generation_waiting_dialog(
+            result,
+            Path("project_output/metadata/latest_hand_reference_prompt.json"),
+        )
+
+        self.assertIn("Saved for history check", message)
+        self.assertIn("Wait until ComfyUI finishes", message)
+        self.assertIn("Press Load hand refs", message)
+
+    def test_format_hand_reference_manual_load_status_explains_empty_generation_state(self) -> None:
+        result = HandReferenceOutputReadResult(
+            images=(),
+            messages=("No hand reference images were found in: project_output/hand_refs",),
+        )
+
+        message = format_hand_reference_manual_load_status(result)
+
+        self.assertIn("No hand reference images were found", message)
+        self.assertIn("wait a little and press Load hand refs again", message)
 
     def test_format_exported_hand_reference_sheet_message_reports_saved_path(self) -> None:
         self.assertEqual(

@@ -251,6 +251,47 @@ def format_prediction_prompt_queued_message(result: ComfyUIPromptResult) -> str:
     return f"Queued prediction workflow: {result.prompt_id}"
 
 
+def format_prediction_generation_waiting_status(
+    result: ComfyUIPromptResult,
+    prompt_metadata_path: Path,
+) -> str:
+    """Return the next manual step after queuing prediction generation."""
+
+    return (
+        f"{format_prediction_prompt_queued_message(result)} | "
+        "ComfyUI is generating. Wait for ComfyUI to finish, then press Load predictions. "
+        f"Prompt ID saved for history check: {prompt_metadata_path.as_posix()}"
+    )
+
+
+def format_prediction_generation_waiting_dialog(
+    result: ComfyUIPromptResult,
+    prompt_metadata_path: Path,
+) -> str:
+    """Return beginner-friendly queue guidance for prediction generation."""
+
+    return (
+        "Prediction workflow was queued.\n\n"
+        f"Prompt ID:\n{result.prompt_id}\n\n"
+        f"Saved for history check:\n{prompt_metadata_path}\n\n"
+        "What to do next:\n"
+        "1. Wait until ComfyUI finishes generating.\n"
+        "2. Press Load predictions to manually load the finished images.\n"
+        "3. If nothing appears yet, wait a little and press Load predictions again."
+    )
+
+
+def format_prediction_manual_load_status(result: PredictionOutputReadResult) -> str:
+    """Return a manual-load status message for prediction thumbnails."""
+
+    if result.ok:
+        return format_prediction_thumbnail_refresh_result(result)
+    return (
+        f"{format_prediction_output_result(result)} "
+        "If ComfyUI is still generating, wait a little and press Load predictions again."
+    )
+
+
 def format_selected_prediction_message(output: PredictionOutputImage) -> str:
     """Return a short status message for the selected prediction candidate."""
 
@@ -293,6 +334,47 @@ def format_hand_reference_prompt_queued_message(result: ComfyUIPromptResult) -> 
     """Return a short status message after queuing a hand reference prompt."""
 
     return f"Queued hand reference workflow: {result.prompt_id}"
+
+
+def format_hand_reference_generation_waiting_status(
+    result: ComfyUIPromptResult,
+    prompt_metadata_path: Path,
+) -> str:
+    """Return the next manual step after queuing hand reference generation."""
+
+    return (
+        f"{format_hand_reference_prompt_queued_message(result)} | "
+        "ComfyUI is generating. Wait for ComfyUI to finish, then press Load hand refs. "
+        f"Prompt ID saved for history check: {prompt_metadata_path.as_posix()}"
+    )
+
+
+def format_hand_reference_generation_waiting_dialog(
+    result: ComfyUIPromptResult,
+    prompt_metadata_path: Path,
+) -> str:
+    """Return beginner-friendly queue guidance for hand reference generation."""
+
+    return (
+        "Hand reference workflow was queued.\n\n"
+        f"Prompt ID:\n{result.prompt_id}\n\n"
+        f"Saved for history check:\n{prompt_metadata_path}\n\n"
+        "What to do next:\n"
+        "1. Wait until ComfyUI finishes generating.\n"
+        "2. Press Load hand refs to manually load the finished images.\n"
+        "3. If nothing appears yet, wait a little and press Load hand refs again."
+    )
+
+
+def format_hand_reference_manual_load_status(result: HandReferenceOutputReadResult) -> str:
+    """Return a manual-load status message for hand reference thumbnails."""
+
+    if result.ok:
+        return format_hand_reference_thumbnail_refresh_result(result)
+    return (
+        f"{format_hand_reference_output_result(result)} "
+        "If ComfyUI is still generating, wait a little and press Load hand refs again."
+    )
 
 
 def format_exported_hand_reference_sheet_message(sheet_path: Path) -> str:
@@ -743,11 +825,11 @@ class ColorRoughReferenceApp:
             messagebox.showerror("Prediction generation", format_error_message("queue prediction generation", error))
             return
 
-        message = format_prediction_prompt_queued_message(result)
-        self.status_message.set(f"{message} | saved prompt ID: {prompt_metadata_path.as_posix()}")
+        message = format_prediction_generation_waiting_status(result, prompt_metadata_path)
+        self.status_message.set(message)
         messagebox.showinfo(
             "Prediction generation",
-            f"Prediction workflow was queued.\n\nPrompt ID:\n{result.prompt_id}\n\nSaved:\n{prompt_metadata_path}",
+            format_prediction_generation_waiting_dialog(result, prompt_metadata_path),
         )
 
     def load_prediction_outputs(self) -> None:
@@ -760,7 +842,7 @@ class ColorRoughReferenceApp:
             messagebox.showerror("Prediction outputs", format_error_message("load prediction outputs", error))
             return
 
-        status = format_prediction_thumbnail_refresh_result(result)
+        status = format_prediction_manual_load_status(result)
         self.status_message.set(status)
         if not result.ok:
             messagebox.showinfo("Prediction outputs", status)
@@ -831,7 +913,10 @@ class ColorRoughReferenceApp:
             self.status_message.set(format_error_message("load hand reference outputs", error).replace("\n", " "))
             return
 
-        self.status_message.set(format_hand_reference_thumbnail_refresh_result(result))
+        status = format_hand_reference_manual_load_status(result)
+        self.status_message.set(status)
+        if not result.ok:
+            messagebox.showinfo("Hand references", status)
 
     def _refresh_hand_reference_thumbnails(self, settings: AppSettings) -> HandReferenceOutputReadResult:
         output_folders = prepare_project_output(settings.default_output_dir)
@@ -1020,11 +1105,11 @@ class ColorRoughReferenceApp:
             messagebox.showerror("Hand reference generation", format_error_message("queue hand reference generation", error))
             return
 
-        message = format_hand_reference_prompt_queued_message(result)
-        self.status_message.set(f"{message} | saved prompt ID: {prompt_metadata_path.as_posix()}")
+        message = format_hand_reference_generation_waiting_status(result, prompt_metadata_path)
+        self.status_message.set(message)
         messagebox.showinfo(
             "Hand reference generation",
-            f"Hand reference workflow was queued.\n\nPrompt ID:\n{result.prompt_id}\n\nSaved:\n{prompt_metadata_path}",
+            format_hand_reference_generation_waiting_dialog(result, prompt_metadata_path),
         )
 
     def select_prediction(self, output: PredictionOutputImage) -> None:
