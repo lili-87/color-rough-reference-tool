@@ -116,7 +116,13 @@ def format_error_message(action: str, error: Exception) -> str:
     hints: list[str] = []
 
     if "could not reach comfyui endpoint" in detail_lower:
-        hints.append("Start ComfyUI first, then check that the endpoint is correct.")
+        hints.extend(
+            (
+                "Start ComfyUI first. The ComfyUI command window should stay open while this app uses it.",
+                "Open the endpoint in a browser, for example http://127.0.0.1:8188, and confirm the ComfyUI page appears.",
+                "If the browser page does not open, check that ComfyUI finished starting and that the endpoint URL and port match this app.",
+            )
+        )
     if "workflow" in detail_lower:
         hints.append("Check the workflow file path. Placeholder files must be replaced with real ComfyUI workflow JSON files.")
     if "selected_candidate.json" in detail_lower or "selected candidate" in detail_lower:

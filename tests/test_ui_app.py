@@ -93,6 +93,9 @@ class UiAppTest(unittest.TestCase):
 
         self.assertIn("Could not queue prediction generation.", message)
         self.assertIn("Start ComfyUI first", message)
+        self.assertIn("command window should stay open", message)
+        self.assertIn("Open the endpoint in a browser", message)
+        self.assertIn("endpoint URL and port match this app", message)
         self.assertIn("Details:", message)
 
     def test_format_error_message_adds_selected_candidate_hint(self) -> None:
