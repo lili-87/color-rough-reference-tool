@@ -126,6 +126,7 @@ Supported hand reference output image formats are `png`, `jpg`, `jpeg`, and `web
 The minimal UI can now show hand reference images from `project_output/hand_refs` in a simple thumbnail area.
 Images that Tkinter can preview are shown as small thumbnails; unsupported preview formats still appear by file name.
 The minimal UI can now queue the hand inpainting workflow again from the saved selected candidate and saved hand mask.
+After queueing a hand inpainting workflow, the minimal UI now saves the latest hand reference prompt ID to `project_output/metadata/latest_hand_reference_prompt.json`.
 Missing, empty, or invalid hand reference output folders are now handled with simple status messages instead of crashing the UI.
 The minimal UI can now export a simple hand reference sheet and show the saved sheet path after export.
 The minimal UI now reopens the configured project output on startup, reloads saved prediction and hand reference thumbnails, and restores the saved selected candidate preview when possible.
@@ -181,15 +182,15 @@ It still does not wait for generation completion or automatically copy ComfyUI o
 
 ## Last Completed Task
 
-Phase 10.5:
-Added minimal UI refresh handling for prediction thumbnails after copied outputs are available.
+Phase 10.6:
+Added minimal saving for the latest hand reference prompt ID after queueing a hand inpainting workflow.
 
 ---
 
 ## Current Next Task
 
-Phase 10.6:
-Store the latest hand reference prompt ID after queueing.
+Phase 10.7:
+Detect finished hand reference outputs from ComfyUI history.
 
 ---
 
