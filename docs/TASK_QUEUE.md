@@ -92,7 +92,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 - [x] Phase 10.4: Copy finished prediction images into `project_output/predictions/`.
 - [x] Phase 10.5: Refresh prediction thumbnails after copied outputs are available.
 - [x] Phase 10.6: Store the latest hand reference prompt ID after queueing.
-- [ ] Phase 10.7: Detect finished hand reference outputs from ComfyUI history.
+- [x] Phase 10.7: Detect finished hand reference outputs from ComfyUI history.
 - [ ] Phase 10.8: Copy finished hand reference images into `project_output/hand_refs/`.
 - [ ] Phase 10.9: Refresh hand reference thumbnails after copied outputs are available.
 

@@ -3,16 +3,20 @@ import json
 import tempfile
 import unittest
 
+from color_rough_ref_tool.core.prompt_metadata import save_latest_hand_reference_prompt_metadata
 from color_rough_ref_tool.core.settings import AppSettings
 from color_rough_ref_tool.integrations.comfyui.hand_inpainting import (
     HAND_MASK_IMAGE_PATH_PLACEHOLDER,
     SELECTED_CANDIDATE_IMAGE_PATH_PLACEHOLDER,
+    fetch_latest_hand_reference_history,
     inject_hand_inpainting_paths,
+    inspect_hand_reference_history,
     load_hand_inpainting_workflow,
     read_hand_reference_outputs,
     read_hand_reference_outputs_safely,
     trigger_hand_inpainting_workflow,
 )
+from color_rough_ref_tool.integrations.comfyui.prediction import ComfyUIHistoryResult
 
 
 TEST_TEMP_DIR = Path("tmp") / "tests"
@@ -80,6 +84,86 @@ class ComfyUIHandInpaintingTest(unittest.TestCase):
         self.assertEqual(captured["url"], "http://localhost:8188/prompt")
         self.assertEqual(captured["body"]["client_id"], "roughref-hand-test")
         self.assertEqual(captured["body"]["prompt"]["20"]["class_type"], "KSampler")
+
+    def test_fetch_latest_hand_reference_history_uses_saved_prompt_id(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            metadata_dir = Path(temp_dir) / "project_output" / "metadata"
+            save_latest_hand_reference_prompt_metadata("hand-003", metadata_dir)
+            settings = AppSettings(comfyui_endpoint="http://localhost:8188")
+            captured: dict[str, object] = {}
+
+            def opener(request: object, timeout: float) -> FakeResponse:
+                captured["url"] = request.full_url
+                return FakeResponse({"hand-003": {"status": {"completed": True}}})
+
+            result = fetch_latest_hand_reference_history(
+                settings,
+                metadata_dir,
+                opener=opener,
+            )
+
+        self.assertEqual(result.prompt_id, "hand-003")
+        self.assertEqual(captured["url"], "http://localhost:8188/history/hand-003")
+        self.assertIn("hand-003", result.history)
+
+    def test_inspect_hand_reference_history_detects_completed_images(self) -> None:
+        history = ComfyUIHistoryResult(
+            prompt_id="hand-004",
+            history={
+                "hand-004": {
+                    "status": {"completed": True},
+                    "outputs": {
+                        "9": {
+                            "images": [
+                                {
+                                    "filename": "ComfyUI_hand_00001_.png",
+                                    "subfolder": "",
+                                    "type": "output",
+                                },
+                                {
+                                    "filename": "notes.txt",
+                                    "subfolder": "",
+                                    "type": "output",
+                                },
+                            ]
+                        }
+                    },
+                }
+            },
+        )
+
+        inspection = inspect_hand_reference_history(history)
+
+        self.assertTrue(inspection.completed)
+        self.assertEqual(inspection.prompt_id, "hand-004")
+        self.assertEqual(len(inspection.images), 1)
+        self.assertEqual(inspection.images[0].file_name, "ComfyUI_hand_00001_.png")
+        self.assertEqual(inspection.images[0].image_type, "output")
+
+    def test_inspect_hand_reference_history_reports_pending_without_completed_status(self) -> None:
+        history = ComfyUIHistoryResult(
+            prompt_id="hand-005",
+            history={
+                "hand-005": {
+                    "status": {"completed": False},
+                    "outputs": {},
+                }
+            },
+        )
+
+        inspection = inspect_hand_reference_history(history)
+
+        self.assertFalse(inspection.completed)
+        self.assertEqual(inspection.images, ())
+
+    def test_inspect_hand_reference_history_reports_not_completed_without_history_entry(self) -> None:
+        history = ComfyUIHistoryResult(prompt_id="missing-hand", history={})
+
+        inspection = inspect_hand_reference_history(history)
+
+        self.assertFalse(inspection.completed)
+        self.assertEqual(inspection.images, ())
 
     def test_inject_hand_inpainting_paths_replaces_nested_placeholders(self) -> None:
         TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)

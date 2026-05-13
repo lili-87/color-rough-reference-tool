@@ -8,9 +8,12 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.request import urlopen
 
+from color_rough_ref_tool.core.prompt_metadata import load_latest_hand_reference_prompt_metadata
 from color_rough_ref_tool.core.settings import AppSettings
 from color_rough_ref_tool.integrations.comfyui.prediction import (
+    ComfyUIHistoryResult,
     ComfyUIPromptResult,
+    fetch_comfyui_history,
     queue_comfyui_prompt,
 )
 
@@ -52,6 +55,24 @@ class HandReferenceOutputReadResult:
         return not self.messages
 
 
+@dataclass(frozen=True, slots=True)
+class HandReferenceHistoryImage:
+    """One hand reference image output reported by ComfyUI history."""
+
+    file_name: str
+    subfolder: str
+    image_type: str
+
+
+@dataclass(frozen=True, slots=True)
+class HandReferenceHistoryInspection:
+    """Small parsed status for one hand reference history response."""
+
+    prompt_id: str
+    completed: bool
+    images: tuple[HandReferenceHistoryImage, ...]
+
+
 def trigger_hand_inpainting_workflow(
     settings: AppSettings,
     *,
@@ -79,6 +100,44 @@ def trigger_hand_inpainting_workflow(
         client_id=client_id,
         timeout_seconds=timeout_seconds,
         opener=opener,
+    )
+
+
+def fetch_latest_hand_reference_history(
+    settings: AppSettings,
+    metadata_dir: Path | str,
+    *,
+    timeout_seconds: float = 30,
+    opener: Callable[..., Any] = urlopen,
+) -> ComfyUIHistoryResult:
+    """Fetch ComfyUI history once using the saved latest hand reference prompt ID."""
+
+    metadata = load_latest_hand_reference_prompt_metadata(metadata_dir)
+    return fetch_comfyui_history(
+        endpoint=settings.comfyui_endpoint,
+        prompt_id=metadata.prompt_id,
+        timeout_seconds=timeout_seconds,
+        opener=opener,
+    )
+
+
+def inspect_hand_reference_history(
+    history_result: ComfyUIHistoryResult,
+) -> HandReferenceHistoryInspection:
+    """Detect completion and image outputs from a ComfyUI hand reference history response."""
+
+    prompt_history = history_result.history.get(history_result.prompt_id)
+    if not isinstance(prompt_history, dict):
+        return HandReferenceHistoryInspection(
+            prompt_id=history_result.prompt_id,
+            completed=False,
+            images=(),
+        )
+
+    return HandReferenceHistoryInspection(
+        prompt_id=history_result.prompt_id,
+        completed=_history_entry_is_completed(prompt_history),
+        images=_history_entry_images(prompt_history),
     )
 
 
@@ -202,3 +261,48 @@ def _replace_placeholders(value: Any, replacements: dict[str, str]) -> Any:
             for key, item in value.items()
         }
     return value
+
+
+def _history_entry_is_completed(prompt_history: dict[str, Any]) -> bool:
+    status = prompt_history.get("status")
+    if isinstance(status, dict) and status.get("completed") is True:
+        return True
+    return False
+
+
+def _history_entry_images(prompt_history: dict[str, Any]) -> tuple[HandReferenceHistoryImage, ...]:
+    outputs = prompt_history.get("outputs")
+    if not isinstance(outputs, dict):
+        return ()
+
+    images: list[HandReferenceHistoryImage] = []
+    for output in outputs.values():
+        if not isinstance(output, dict):
+            continue
+        raw_images = output.get("images")
+        if not isinstance(raw_images, list):
+            continue
+        for raw_image in raw_images:
+            image = _history_image_from_raw(raw_image)
+            if image is not None:
+                images.append(image)
+    return tuple(images)
+
+
+def _history_image_from_raw(raw_image: Any) -> HandReferenceHistoryImage | None:
+    if not isinstance(raw_image, dict):
+        return None
+
+    file_name = raw_image.get("filename")
+    if not isinstance(file_name, str) or not file_name:
+        return None
+    if Path(file_name).suffix.lower() not in HAND_REFERENCE_IMAGE_EXTENSIONS:
+        return None
+
+    subfolder = raw_image.get("subfolder", "")
+    image_type = raw_image.get("type", "")
+    return HandReferenceHistoryImage(
+        file_name=file_name,
+        subfolder=subfolder if isinstance(subfolder, str) else "",
+        image_type=image_type if isinstance(image_type, str) else "",
+    )

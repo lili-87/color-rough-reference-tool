@@ -123,6 +123,7 @@ It can now replace selected candidate and hand mask placeholders in the hand inp
 The supported hand workflow placeholder strings are `{{SELECTED_CANDIDATE_IMAGE_PATH}}`, `{{SELECTED_CANDIDATE_IMAGE}}`, `{{HAND_MASK_IMAGE_PATH}}`, and `{{HAND_MASK_IMAGE}}`.
 It can now read generated hand reference image files from a hand reference output folder.
 Supported hand reference output image formats are `png`, `jpg`, `jpeg`, and `webp`.
+It can now fetch ComfyUI history once for the latest saved hand reference prompt ID and inspect whether the hand reference prompt has completed with reported image outputs.
 The minimal UI can now show hand reference images from `project_output/hand_refs` in a simple thumbnail area.
 Images that Tkinter can preview are shown as small thumbnails; unsupported preview formats still appear by file name.
 The minimal UI can now queue the hand inpainting workflow again from the saved selected candidate and saved hand mask.
@@ -182,15 +183,15 @@ It still does not wait for generation completion or automatically copy ComfyUI o
 
 ## Last Completed Task
 
-Phase 10.6:
-Added minimal saving for the latest hand reference prompt ID after queueing a hand inpainting workflow.
+Phase 10.7:
+Added minimal detection for completed hand reference history and reported output image information.
 
 ---
 
 ## Current Next Task
 
-Phase 10.7:
-Detect finished hand reference outputs from ComfyUI history.
+Phase 10.8:
+Copy finished hand reference images into `project_output/hand_refs/`.
 
 ---
 
