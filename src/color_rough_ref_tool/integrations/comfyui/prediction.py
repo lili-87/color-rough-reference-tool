@@ -65,6 +65,15 @@ class SavedPredictionCandidate:
 
 
 @dataclass(frozen=True, slots=True)
+class CopiedPredictionHistoryImage:
+    """A ComfyUI history image copied into the project predictions folder."""
+
+    source_path: Path
+    saved_path: Path
+    file_name: str
+
+
+@dataclass(frozen=True, slots=True)
 class ComfyUIHistoryResult:
     """Raw ComfyUI history response for one prompt ID."""
 
@@ -268,6 +277,49 @@ def inspect_prediction_history(
     )
 
 
+def copy_finished_prediction_images(
+    inspection: PredictionHistoryInspection,
+    *,
+    comfyui_output_dir: Path | str,
+    predictions_dir: Path | str,
+) -> tuple[CopiedPredictionHistoryImage, ...]:
+    """Copy completed prediction images reported by ComfyUI history."""
+
+    if not inspection.completed:
+        return ()
+
+    output_dir = Path(comfyui_output_dir)
+    if not output_dir.exists():
+        raise FileNotFoundError(f"ComfyUI output folder does not exist: {output_dir}")
+    if not output_dir.is_dir():
+        raise ValueError(f"ComfyUI output path must be a folder: {output_dir}")
+
+    destination_dir = Path(predictions_dir)
+    destination_dir.mkdir(parents=True, exist_ok=True)
+
+    copied: list[CopiedPredictionHistoryImage] = []
+    for image in inspection.images:
+        source_path = _history_image_source_path(output_dir, image)
+        if not source_path.exists():
+            raise FileNotFoundError(f"ComfyUI history image does not exist: {source_path}")
+        if not source_path.is_file():
+            raise ValueError(f"ComfyUI history image path must be a file: {source_path}")
+        if source_path.suffix.lower() not in PREDICTION_IMAGE_EXTENSIONS:
+            continue
+
+        saved_path = destination_dir / image.file_name
+        shutil.copy2(source_path, saved_path)
+        copied.append(
+            CopiedPredictionHistoryImage(
+                source_path=source_path,
+                saved_path=saved_path,
+                file_name=image.file_name,
+            )
+        )
+
+    return tuple(copied)
+
+
 def save_selected_prediction_candidate(
     candidate_path: Path | str,
     selected_dir: Path | str,
@@ -381,6 +433,21 @@ def _history_image_from_raw(raw_image: Any) -> ComfyUIHistoryImage | None:
         subfolder=subfolder if isinstance(subfolder, str) else "",
         image_type=image_type if isinstance(image_type, str) else "",
     )
+
+
+def _history_image_source_path(
+    output_dir: Path,
+    image: ComfyUIHistoryImage,
+) -> Path:
+    file_name_path = Path(image.file_name)
+    if file_name_path.name != image.file_name:
+        raise ValueError(f"ComfyUI history image filename must not contain folders: {image.file_name}")
+
+    subfolder = Path(image.subfolder) if image.subfolder else Path()
+    if subfolder.is_absolute() or ".." in subfolder.parts:
+        raise ValueError(f"ComfyUI history image subfolder must stay inside the output folder: {image.subfolder}")
+
+    return output_dir / subfolder / image.file_name
 
 
 def _replace_color_rough_placeholders(value: Any, image_path: str) -> Any:

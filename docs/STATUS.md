@@ -106,6 +106,7 @@ The minimal UI can now queue the prediction workflow again from a selected color
 After queueing a prediction workflow, the minimal UI now saves the latest prediction prompt ID to `project_output/metadata/latest_prediction_prompt.json`.
 The prediction integration can now fetch ComfyUI history once for a prompt ID, including the latest saved prediction prompt ID.
 The prediction integration can now inspect ComfyUI history to detect whether a prediction prompt is completed and list reported prediction image outputs.
+The prediction integration can now copy completed prediction images reported by ComfyUI history from a ComfyUI output folder into `project_output/predictions`.
 Missing, empty, or invalid prediction output folders are now handled with simple status messages instead of crashing the UI.
 The minimal UI can now select one loaded prediction candidate with a radio button and show the selected file name in the status area.
 The minimal UI can now copy the selected prediction candidate into `project_output/selected` while keeping the original file name.
@@ -179,15 +180,15 @@ It still does not wait for generation completion or automatically copy ComfyUI o
 
 ## Last Completed Task
 
-Phase 10.3:
-Added minimal detection for completed prediction history and reported output image information.
+Phase 10.4:
+Added minimal copying for completed prediction images reported by ComfyUI history into `project_output/predictions/`.
 
 ---
 
 ## Current Next Task
 
-Phase 10.4:
-Copy finished prediction images into `project_output/predictions/`.
+Phase 10.5:
+Refresh prediction thumbnails after copied outputs are available.
 
 ---
 

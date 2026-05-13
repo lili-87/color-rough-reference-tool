@@ -6,6 +6,9 @@ import unittest
 from color_rough_ref_tool.core.settings import AppSettings
 from color_rough_ref_tool.integrations.comfyui.prediction import (
     COLOR_ROUGH_IMAGE_PATH_PLACEHOLDER,
+    ComfyUIHistoryImage,
+    PredictionHistoryInspection,
+    copy_finished_prediction_images,
     fetch_comfyui_history,
     fetch_latest_prediction_history,
     inject_color_rough_path,
@@ -201,6 +204,121 @@ class ComfyUIPredictionTest(unittest.TestCase):
 
         self.assertFalse(inspection.completed)
         self.assertEqual(inspection.images, ())
+
+    def test_copy_finished_prediction_images_copies_history_images_to_predictions(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            temp_path = Path(temp_dir)
+            comfyui_output_dir = temp_path / "comfyui_output"
+            predictions_dir = temp_path / "project_output" / "predictions"
+            comfyui_output_dir.mkdir()
+            source_path = comfyui_output_dir / "ComfyUI_00001_.png"
+            source_path.write_bytes(b"generated prediction bytes")
+            inspection = PredictionHistoryInspection(
+                prompt_id="prediction-006",
+                completed=True,
+                images=(
+                    ComfyUIHistoryImage(
+                        file_name="ComfyUI_00001_.png",
+                        subfolder="",
+                        image_type="output",
+                    ),
+                ),
+            )
+
+            copied = copy_finished_prediction_images(
+                inspection,
+                comfyui_output_dir=comfyui_output_dir,
+                predictions_dir=predictions_dir,
+            )
+
+            self.assertEqual(len(copied), 1)
+            self.assertEqual(copied[0].source_path, source_path)
+            self.assertEqual(copied[0].saved_path, predictions_dir / "ComfyUI_00001_.png")
+            self.assertEqual(copied[0].saved_path.read_bytes(), b"generated prediction bytes")
+
+    def test_copy_finished_prediction_images_uses_comfyui_subfolder(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            temp_path = Path(temp_dir)
+            comfyui_output_dir = temp_path / "comfyui_output"
+            nested_dir = comfyui_output_dir / "roughref"
+            predictions_dir = temp_path / "project_output" / "predictions"
+            nested_dir.mkdir(parents=True)
+            (nested_dir / "ComfyUI_00002_.webp").write_bytes(b"nested prediction bytes")
+            inspection = PredictionHistoryInspection(
+                prompt_id="prediction-007",
+                completed=True,
+                images=(
+                    ComfyUIHistoryImage(
+                        file_name="ComfyUI_00002_.webp",
+                        subfolder="roughref",
+                        image_type="output",
+                    ),
+                ),
+            )
+
+            copied = copy_finished_prediction_images(
+                inspection,
+                comfyui_output_dir=comfyui_output_dir,
+                predictions_dir=predictions_dir,
+            )
+
+            self.assertEqual(copied[0].source_path, nested_dir / "ComfyUI_00002_.webp")
+            self.assertEqual(copied[0].saved_path.read_bytes(), b"nested prediction bytes")
+
+    def test_copy_finished_prediction_images_skips_pending_history(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            temp_path = Path(temp_dir)
+            comfyui_output_dir = temp_path / "comfyui_output"
+            predictions_dir = temp_path / "project_output" / "predictions"
+            comfyui_output_dir.mkdir()
+            inspection = PredictionHistoryInspection(
+                prompt_id="prediction-008",
+                completed=False,
+                images=(
+                    ComfyUIHistoryImage(
+                        file_name="ComfyUI_00003_.png",
+                        subfolder="",
+                        image_type="output",
+                    ),
+                ),
+            )
+
+            copied = copy_finished_prediction_images(
+                inspection,
+                comfyui_output_dir=comfyui_output_dir,
+                predictions_dir=predictions_dir,
+            )
+
+            self.assertEqual(copied, ())
+            self.assertFalse(predictions_dir.exists())
+
+    def test_copy_finished_prediction_images_rejects_unsafe_history_paths(self) -> None:
+        TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=TEST_TEMP_DIR) as temp_dir:
+            comfyui_output_dir = Path(temp_dir) / "comfyui_output"
+            predictions_dir = Path(temp_dir) / "project_output" / "predictions"
+            comfyui_output_dir.mkdir()
+            inspection = PredictionHistoryInspection(
+                prompt_id="prediction-009",
+                completed=True,
+                images=(
+                    ComfyUIHistoryImage(
+                        file_name="ComfyUI_00004_.png",
+                        subfolder="..",
+                        image_type="output",
+                    ),
+                ),
+            )
+
+            with self.assertRaises(ValueError):
+                copy_finished_prediction_images(
+                    inspection,
+                    comfyui_output_dir=comfyui_output_dir,
+                    predictions_dir=predictions_dir,
+                )
 
     def test_inject_color_rough_path_replaces_nested_placeholders(self) -> None:
         TEST_TEMP_DIR.mkdir(parents=True, exist_ok=True)
