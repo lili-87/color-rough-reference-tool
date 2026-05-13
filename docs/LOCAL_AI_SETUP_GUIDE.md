@@ -184,7 +184,45 @@ Hand reference testing comes after selecting and saving a prediction candidate a
 
 ---
 
-## 7. Still Not Implemented
+## 7. Troubleshooting Checklist
+
+If generation does not work, check these items from top to bottom.
+
+```text
+1. Is ComfyUI running?
+   The ComfyUI command window must stay open.
+
+2. Does http://127.0.0.1:8188 open in a browser?
+   If not, ComfyUI is not ready or the port is different.
+
+3. Does the app's ComfyUI endpoint match the browser URL?
+   The usual value is http://127.0.0.1:8188.
+
+4. Did you select real API-format workflow JSON files?
+   The placeholder files alone cannot generate images.
+
+5. Does Check workflows pass?
+   If it warns about disconnected image nodes, reconnect the Load Image or mask nodes in ComfyUI and export API JSON again.
+
+6. Is a local SDXL checkpoint installed in ComfyUI's model folder?
+   Keep model files inside the external ComfyUI installation, not inside this app folder.
+
+7. For prediction, did you choose a color rough image before pressing Regenerate prediction?
+
+8. For hand reference, did you Save selected and Save mask before pressing Regenerate hand ref?
+
+9. If ComfyUI accepted the prompt but no image appears in the app, wait until ComfyUI finishes, then press Load predictions or Load hand refs.
+
+10. If images still do not appear, check where ComfyUI saved them and copy or configure them into:
+    project_output/predictions/
+    project_output/hand_refs/
+```
+
+Keep the first working setup simple. Use one SDXL checkpoint first, then add ControlNet or inpainting-specific models only when the basic workflow is confirmed.
+
+---
+
+## 8. Still Not Implemented
 
 These are intentionally left for later app-side tasks:
 
@@ -199,7 +237,7 @@ These are intentionally left for later app-side tasks:
 
 ---
 
-## 8. Current Next Development Order
+## 9. Current Next Development Order
 
 After the first successful queue test, continue in this order:
 

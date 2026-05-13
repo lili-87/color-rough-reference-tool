@@ -102,7 +102,7 @@ Codex should work on the next unfinished task only unless the user says otherwis
 - [x] Phase 11.2: Add clearer message when ComfyUI is not running or unreachable.
 - [x] Phase 11.3: Add clearer message when workflow placeholders are present but image input is not connected in the workflow.
 - [x] Phase 11.4: Add guard message before hand reference generation if selected candidate or mask is missing.
-- [ ] Phase 11.5: Add a simple troubleshooting checklist to the local AI setup guide.
+- [x] Phase 11.5: Add a simple troubleshooting checklist to the local AI setup guide.
 
 ## Phase 12: v0.1 Validation
 

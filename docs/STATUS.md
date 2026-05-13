@@ -150,6 +150,7 @@ ComfyUI workflow requirements are now documented in `docs/COMFYUI_WORKFLOW_REQUI
 The prediction workflow requirements now document the minimum recommended img2img route and a ControlNet-style route so the color rough image is actually used by generation.
 Local AI setup guidance is now documented in `docs/LOCAL_AI_SETUP_GUIDE.md`.
 The local AI setup guide now explains what to do when the app warns that the color rough image node is not connected.
+The local AI setup guide now includes a beginner-friendly troubleshooting checklist for ComfyUI startup, endpoint checks, workflow JSON, model placement, saved selected candidates, saved masks, and manual output loading.
 The post-AI setup implementation plan is now documented in `docs/ROADMAP.md` and `docs/TASK_QUEUE.md`.
 
 Minimal color rough image selection handling now exists in `src/color_rough_ref_tool/core/color_rough_input.py`.
@@ -192,15 +193,15 @@ It still does not wait for generation completion or automatically copy ComfyUI o
 
 ## Last Completed Task
 
-Phase 11.4:
-Added a beginner-friendly guard message before hand reference generation when the selected candidate or hand mask is missing.
+Phase 11.5:
+Added a simple beginner-friendly troubleshooting checklist to the local AI setup guide.
 
 ---
 
 ## Current Next Task
 
-Phase 11.5:
-Add a simple troubleshooting checklist to the local AI setup guide.
+Phase 12.1:
+Run one complete manual prediction test with external ComfyUI.
 
 ---
 
